@@ -109,12 +109,20 @@ ssn = validate_synthetic_ssn(user_text)  # before persisting to messages/state
 ```
 
 Only the Intake agent asks questions. Extraction returns fixed issue codes and
-messages. `missing_amount`, `low_confidence`, `ambiguous_amount`, `multiple_copies`,
+messages. `missing_amount`, `invalid_amount`, `low_confidence`, `ambiguous_amount`, `multiple_copies`,
 `merged_labels`, `missing_field`, `ambiguous_field`, `unrecognized_document`, and
 `ocr_failed` need a clearer image or review. `unsafe_ssn` and `invalid_image` reject
 the upload. Never treat a blank box as zero. Never let a human simply approve an
 unsourced missing amount. If direct user entry is added, it must be a separate
 `origin=user_input` fact with actor/time; it is not document evidence.
+
+Missing/masked SSNs and absent EINs do not block monetary transcription. Do not
+ask someone to reveal a complete identifier only to read wages and withholding.
+Visible identifiers are checked, and ambiguous or low-confidence recognized
+identifiers still require review. The supervisor/Intake must link each upload to
+the correct taxpayer/spouse and resolve ownership conflicts before computation;
+`extracted` does not establish ownership. A printed year is read only from a
+standalone non-monetary token or form-title context, not an amount or SSN suffix.
 
 `python -m examples.hitl_extraction` demonstrates `interrupt` / `Command(resume=...)`
 with a missing box 2, a replacement upload, and preservation of the original

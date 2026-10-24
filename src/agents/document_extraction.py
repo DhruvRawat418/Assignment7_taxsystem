@@ -10,6 +10,7 @@ from threading import local
 from typing import Annotated, Callable, TypedDict
 
 from src.document_extraction import extract_w2
+from src.document_extraction.models import ExtractionResult, Issue
 from src.document_extraction.ocr import OCREngine, RapidOCREngine
 
 
@@ -56,7 +57,12 @@ def make_extraction_node(engine_factory: Callable[[], OCREngine] = RapidOCREngin
     def document_extraction_node(state: ExtractionState) -> dict:
         request = state["document"]
         if not hasattr(engines, "reader"):
-            engines.reader = engine_factory()
+            try:
+                engines.reader = engine_factory()
+            except Exception:
+                result = ExtractionResult(document_id=request["document_id"], status="needs_review",
+                    issues=(Issue(code="ocr_failed", message="The local OCR engine could not start. Request technical or human review."),))
+                return {"extractions": {request["document_id"]: result.model_dump(mode="json")}}
         result = extract_w2(request["path"], request["document_id"], engine=engines.reader)
         return {"extractions": {request["document_id"]: result.model_dump(mode="json")}}
 

@@ -53,9 +53,11 @@ python extract_documents.py demo/w2_missing_withholding.jpg --output outputs/rev
 
 PNG, JPEG, or WEBP; one upright W-2 copy per image, at most 20 MiB / 20 million
 pixels. EXIF orientation is applied. Printed year, synthetic employee SSN, employer
-EIN, and monetary boxes **1-8, 10, 11** are supported. Boxes **1 and 2**, year,
-synthetic SSN, and EIN are required for a complete extraction. Optional blank boxes
-are absent, not zero. Box 9 is unused. Codes, checkboxes, and boxes 12-20 are not
+EIN, and monetary boxes **1-8, 10, 11** are supported. Boxes **1 and 2** and the
+printed year are required for a complete extraction. A readable SSN/EIN is retained
+when present; a masked or absent identifier does not require extra PII. Optional
+blank boxes are absent, not zero; unreadable nonblank content requires review.
+Box 9 is unused. Codes, checkboxes, and boxes 12-20 are not
 transcribed by this component. The assignment's tested W-2 wages/withholding path
 uses boxes 1 and 2. The team must decide separately whether additional document
 fields are needed for its return profile.
@@ -101,5 +103,6 @@ cycle, no-progress handoff guard, dashboard, and tax return generation.
 See [integration contract](docs/DOCUMENT_EXTRACTION.md),
 [implementation notes](docs/IMPLEMENTATION_NOTES.md),
 [validation results](docs/EXTRACTION_VALIDATION.md),
+[second review and fixes](docs/REVIEW_2026-10-24.md),
 [demo 1](demo/eval_case_1.md), [demo 2](demo/eval_case_2.md),
 and [AI-use disclosure](docs/AI_DISCLOSURE.md).

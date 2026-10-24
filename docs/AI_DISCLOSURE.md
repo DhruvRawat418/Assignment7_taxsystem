@@ -5,6 +5,9 @@ task document, design and implement the Document Extraction component, write its
 typed output/provenance schema and LangGraph adapter, generate synthetic W-2 test
 images, and create tests and integration documentation. Codex ran the code locally
 and used test failures to revise OCR label matching and the example handoff loop.
+During a second review, Codex added edge-case tests, corrected year/identifier
+classification and unreadable-amount handling, and reran the component in a fresh
+isolated environment with 77 tests passing.
 The extractor uses RapidOCR/ONNX locally; it does not use an LLM to infer tax values
 or perform tax calculations. The committed examples and test results document the
 implemented behavior and its limits. This paragraph covers this contribution only;

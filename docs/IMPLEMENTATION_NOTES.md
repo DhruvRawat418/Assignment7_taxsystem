@@ -42,7 +42,10 @@ not a guarantee that a monetary value is correct; Review must check the evidence
 
 Low-quality/handwritten, skewed, cropped, masked-SSN, multi-copy, or nonstandard
 W-2s may require a new upright high-resolution image. Missing required labels,
-identity fields, or box amounts block completion. Multiple numeric candidates
+year, or box 1/2 amounts block completion. Masked/absent SSN and EIN values are
+optional; ownership still has to be established by the supervisor and Intake.
+Unreadable nonblank content in an optional monetary box also requires review.
+Multiple numeric candidates
 block that box rather than choosing the nearest plausible amount. Boxes 12-20,
 names/addresses, and non-W-2 forms are not extracted. The Rules agent must still
 assess document year, ownership, scope, and all tax rules. The supervisor must

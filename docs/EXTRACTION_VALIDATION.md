@@ -7,9 +7,13 @@ ONNX Runtime 1.23.2. Dependencies are pinned in `requirements-lock.txt`.
 
 Command: `python -m pytest -q`
 
-Result: **49 passed in 29.19 seconds**. This includes real OCR of image pixels,
-not only mocked model responses. Runtime is one observed run, not a performance
-guarantee. `git diff --check` and Python bytecode compilation also passed.
+Latest result after the second review: **77 passed in 60.57 seconds**, run in a
+new isolated environment installed from all 57 packages in the lock file. This
+includes real OCR of image pixels, not only mocked responses. The original 49-test
+suite passed but missed edge cases; 28 regression cases were added during the
+second review. See [findings and fixes](REVIEW_2026-10-24.md). Runtime is one
+observed run, not a performance guarantee. `git diff --check` and Python bytecode
+compilation also passed.
 
 ## Observed image cases
 
@@ -20,6 +24,10 @@ guarantee. `git diff --check` and Python bytecode compilation also passed.
 | New PNG generated at 80% size with unseen amounts | 51234.67 | 4321.09 | `extracted` |
 | Generated synthetic image with disallowed SSN prefix | no record retained | no record retained | `rejected`, `unsafe_ssn` |
 | `demo/w2_irs_layout.png` on the official IRS 2025 layout | 51234.67 | 4321.09 | `extracted` |
+| New JPEG with box 1 `2,024.00` and synthetic SSN ending `2024` | 2024.00 | 3125.50 | `extracted`, printed year remains 2025 |
+| New JPEG with box 1 `2026.00` and synthetic SSN ending `2026` | 2026.00 | 3125.50 | `extracted`, printed year remains 2025 |
+| New JPEG with `ABC` in optional monetary boxes | 38750.25 | 3125.50 | `needs_review`, `invalid_amount` |
+| New JPEG with masked SSN and absent EIN | 38750.25 | 3125.50 | `extracted`; no additional identifiers requested |
 
 The IRS-layout PNG has SHA-256
 `32fd17e14eda45785acbe714ff8f159523aff7f93dddec3bc6b7b89d791c7d97`.

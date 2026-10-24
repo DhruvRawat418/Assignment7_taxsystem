@@ -28,9 +28,13 @@ BOUNDARIES = list(LABELS.values()) + [
     r"^9$", r"^12[abcd]", r"^13statutory", r"^14other",
     r"^15state", r"^16statewages", r"^17stateincome",
 ]
-SSN = re.compile(r"(?<!\d)(\d{3})[- ]?(\d{2})[- ]?(\d{4})(?!\d)")
+SSN = re.compile(r"(?<!\d)(\d{3})[- ]*(\d{2})[- ]*(\d{4})(?!\d)")
 EIN = re.compile(r"(?<!\d)\d{2}-\d{7}(?!\d)")
 MONEY = re.compile(r"^\$?\s*(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{2})?$")
+LABEL_CONTINUATIONS = {
+    "compensation", "othercompensation", "tipsothercompensation", "withheld",
+    "taxwithheld", "incometaxwithheld", "wages", "andtips", "benefits", "plans",
+}
 
 
 def parse_money(text: str) -> Decimal:
@@ -53,6 +57,27 @@ def _union(tokens: list[Token]) -> tuple[float, float, float, float]:
             max(t.bbox[2] for t in tokens), max(t.bbox[3] for t in tokens))
 
 
+def _field_region(label: Token, anchors: list[Token], image_size: tuple[int, int]):
+    width, height = image_size
+    lh = max(1., label.bbox[3] - label.bbox[1])
+    left = label.bbox[0] - .4 * lh
+    right_candidates = [a.bbox[0] - .3 * lh for a in anchors
+                        if a.bbox[0] > label.bbox[0] + lh
+                        and abs(a.cy - label.cy) < 1.2 * lh]
+    right = min(right_candidates, default=float(width))
+    # Either column's next label bounds the row. Always cap its height too:
+    # a missing label must not extend the search into a distant unrelated row.
+    lower_candidates = [a.bbox[1] for a in anchors
+                        if a.bbox[1] > label.bbox[3] + .3 * lh]
+    bottom = min([height, label.bbox[3] + 4 * lh, *lower_candidates])
+    return left, label.bbox[3], right, bottom
+
+
+def _inside(token: Token, region) -> bool:
+    left, top, right, bottom = region
+    return left <= token.bbox[0] and token.bbox[2] <= right and top <= token.cy < bottom
+
+
 def transcribe_tokens(
     tokens: list[Token], *, document_id: str, sha256: str,
     image_size: tuple[int, int], engine: str, min_confidence: float = .90,
@@ -62,9 +87,16 @@ def transcribe_tokens(
         raise ValueError("min_confidence must be between 0 and 1.")
     now = datetime.now(timezone.utc)
     issues: list[Issue] = []
+    anchors = [t for t in tokens if any(_matches(t, p) for p in BOUNDARIES)]
+    regions = [_field_region(t, anchors, image_size) for t in anchors
+               if any(_matches(t, p) for p in LABELS.values())]
 
     # Validate before constructing records or persisting raw evidence.
-    ssns = [(t, m) for t in tokens for m in SSN.finditer(t.text)]
+    # A nine-digit dollar amount inside a labeled monetary box is not an SSN.
+    # Formatted SSNs remain blocked even when placed inside a monetary box.
+    ssns = [(t, m) for t in tokens for m in SSN.finditer(t.text)
+            if not (MONEY.fullmatch(t.text.strip())
+                    and any(_inside(t, region) for region in regions))]
     if any(not 900 <= int(m[1]) <= 999 for _, m in ssns):
         return ExtractionResult(document_id=document_id, sha256=sha256,
             status="rejected", issues=(Issue(code="unsafe_ssn", field="employee_ssn",
@@ -82,8 +114,10 @@ def transcribe_tokens(
             raw_text=raw_text or " | ".join(t.text for t in evidence),
             confidence=min(t.confidence for t in evidence), engine=engine, timestamp=now)
 
-    def text_fact(field: str, candidates: list[tuple[str, Token]]) -> TextFact | None:
+    def text_fact(field: str, candidates: list[tuple[str, Token]], *, required: bool = True) -> TextFact | None:
         values = {value for value, _ in candidates}
+        if not values and not required:
+            return None
         if len(values) != 1:
             issues.append(Issue(code="missing_field" if not values else "ambiguous_field",
                 field=field, message=f"{field} needs a clear, unique printed value."))
@@ -95,15 +129,27 @@ def transcribe_tokens(
             return None
         return TextFact(value=value, source=source(field, [token]))
 
-    year_candidates = [(m[0], t) for t in tokens for m in re.finditer(r"(?<!\d)20\d{2}(?!\d)", t.text)]
+    year_candidates = []
+    for token in tokens:
+        # A year must be a standalone heading/footer value or explicitly part of
+        # the form title. A monetary value or SSN suffix is never year evidence.
+        if any(_inside(token, region) for region in regions):
+            continue
+        text = SSN.sub("", EIN.sub("", token.text)).strip()
+        compact = re.sub(r"[^a-z0-9]", "", text.lower())
+        if re.fullmatch(r"20\d{2}", text):
+            year_candidates.append((text, token))
+        elif re.search(r"taxyear|wageandtaxstatement|(?:^|form)w2", compact):
+            # FormW22025 can be emitted without a gap after the form number.
+            title_text = re.sub(r"(?i)w\s*[-–]?\s*2", "W-2 ", text)
+            year_candidates.extend((m[0], token) for m in
+                re.finditer(r"(?<!\d)20\d{2}(?!\d)", title_text))
     year = text_fact("tax_year", year_candidates)
     employee_ssn = text_fact("employee_ssn", [
-        (f"{m[1]}-{m[2]}-{m[3]}", t) for t, m in ssns])
-    ein = text_fact("employer_ein", [(m[0], t) for t in tokens for m in EIN.finditer(t.text)])
+        (f"{m[1]}-{m[2]}-{m[3]}", t) for t, m in ssns], required=False)
+    ein = text_fact("employer_ein", [(m[0], t) for t in tokens for m in EIN.finditer(t.text)], required=False)
 
     amounts: dict[str, MoneyFact] = {}
-    anchors = [t for t in tokens if any(_matches(t, p) for p in BOUNDARIES)]
-    width, height = image_size
     for box, pattern in LABELS.items():
         labels = [t for t in tokens if _matches(t, pattern)]
         if len(labels) != 1:
@@ -117,21 +163,15 @@ def transcribe_tokens(
             issues.append(Issue(code="merged_labels", field=f"box_{box}",
                 message="Adjacent box labels merged during OCR. Supply a higher-resolution crop."))
             continue
-        lh = max(1., label.bbox[3] - label.bbox[1])
-        left = label.bbox[0] - .4 * lh
-        right_candidates = [a.bbox[0] - .3 * lh for a in anchors
-                            if a.bbox[0] > label.bbox[0] + lh
-                            and abs(a.cy - label.cy) < 1.2 * lh]
-        right = min(right_candidates, default=float(width))
-        # Either column's next label bounds the row. This also handles a box
-        # number misread in one column without consuming it as a dollar amount.
-        lower_candidates = [a.bbox[1] for a in anchors
-                            if a.bbox[1] > label.bbox[3] + .3 * lh]
-        bottom = min(lower_candidates, default=min(height, label.bbox[3] + 4 * lh))
-        candidates = [t for t in tokens if t is not label
-                      and left <= t.bbox[0] and t.bbox[2] <= right
-                      and label.bbox[3] <= t.cy < bottom
-                      and MONEY.fullmatch(t.text.strip())]
+        region = _field_region(label, anchors, image_size)
+        content = [t for t in tokens if t is not label and _inside(t, region)]
+        candidates = [t for t in content if MONEY.fullmatch(t.text.strip())]
+        unreadable = [t for t in content if t not in candidates
+            and re.sub(r"[^a-z0-9]", "", t.text.lower()) not in LABEL_CONTINUATIONS]
+        if unreadable:
+            issues.append(Issue(code="invalid_amount", field=f"box_{box}",
+                message=f"Box {box} contains unreadable or unexpected content. Verify the image; do not treat it as blank."))
+            continue
         if len(candidates) != 1:
             if candidates or box in {"1", "2"}:
                 issues.append(Issue(code="ambiguous_amount" if candidates else "missing_amount",
@@ -161,8 +201,8 @@ def extract_w2(path: str | Path, document_id: str, *, engine: OCREngine | None =
         return ExtractionResult(document_id=document_id, status="rejected",
             issues=(Issue(code="invalid_image", message="Use an accessible single PNG, JPEG, or WEBP image under the size limits."),))
     digest = hashlib.sha256(raw).hexdigest()
-    reader = engine or RapidOCREngine()
     try:
+        reader = engine or RapidOCREngine()
         tokens = reader.read(image)
     except Exception:
         return ExtractionResult(document_id=document_id, sha256=digest, status="needs_review",

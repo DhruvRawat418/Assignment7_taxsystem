@@ -21,7 +21,7 @@ def font(size):
 
 
 def make_w2(path, *, wages="38,750.25", withheld="3,125.50", ssn="901-12-3456",
-            year="2025", other_wages="38,750.25", scale=1):
+            year="2025", other_wages="38,750.25", scale=1, ein="12-3456789"):
     image = Image.new("RGB", (1800, 1100), "white")
     draw = ImageDraw.Draw(image)
     def text(x, y, value, size=24):
@@ -32,7 +32,7 @@ def make_w2(path, *, wages="38,750.25", withheld="3,125.50", ssn="901-12-3456",
     text(45, 145, "a Employee's social security number", 23)
     text(65, 195, ssn, 32)
     text(45, 275, "b Employer identification number (EIN)", 23)
-    text(65, 320, "12-3456789", 32)
+    text(65, 320, ein, 32)
     text(45, 410, "c Employer's name and address", 23)
     text(65, 455, "Silver Demo Employer", 30)
     text(65, 500, "100 Example Street", 27)
