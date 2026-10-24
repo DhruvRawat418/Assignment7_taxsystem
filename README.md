@@ -1,6 +1,6 @@
 # SilverFile - Document Extraction (Xinrui/work)
 
-This branch implements Xinrui's **Document Extraction** component for Assignment 7.
+This branch implements **Document Extraction** component for Assignment 7.
 It reads synthetic W-2 images locally and returns typed records with evidence for
 each monetary value. It does not produce a complete tax return by itself. The other
 five agents, full dashboard, deterministic tax MCP tools, and final form generation
