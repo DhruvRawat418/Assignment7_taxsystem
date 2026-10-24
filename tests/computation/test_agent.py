@@ -34,9 +34,13 @@ async def test_real_mcp_clean_return_provenance_and_multiple_documents(request_d
         for line, value in expected.items():
             assert result.lines[line].value == Decimal(value)
         calls = {call.call_id: call for call in result.tool_calls}
-        for line, amount in result.lines.items():
+        audit_values = {**result.lines, **result.intermediates}
+        assert set(result.intermediates) == {"ss_adjustments", "income_before_ss"}
+        for line, amount in audit_values.items():
             assert amount.tool_call_id in calls
             assert amount.value == Decimal(calls[amount.tool_call_id].result["value"])
+            assert calls[amount.tool_call_id].output_key == line
+            assert all(dependency in audit_values for dependency in amount.depends_on)
             assert amount.rule_references
         assert result.lines["34"].sources  # transitive evidence reaches the final balance
         names = [call.tool for call in result.tool_calls]
@@ -154,13 +158,15 @@ async def test_actual_langgraph_integration_and_reexecution_replaces_stale_resul
     updated = await graph.ainvoke(output)
     assert updated["computation_result"]["status"] == "needs_human_review"
     assert updated["computation_result"]["lines"] == {}
+    assert updated["computation_result"]["intermediates"] == {}
     assert set(await computation_node({})) == {"computation_result"}
 
 
 @pytest.mark.asyncio
 async def test_real_mcp_joint_spouse_eligibility_and_amount_owed(request_data):
     request_data["profile"] = {"filing_status": "mfj", "taxpayer_65_or_older": False,
-                               "spouse_65_or_older": True}
+                               "spouse_65_or_older": True, "taxpayer_blind": False,
+                               "spouse_blind": False}
     change(request_data, "25a", "0.00")
     async with computation_tools() as client:
         result = await compute(request_data, client)
@@ -180,3 +186,26 @@ async def test_malformed_tool_result_is_not_a_tax_return(request_data):
 
     result = await compute(request_data, InvalidTools())
     assert result.status == "tool_error" and not result.lines
+
+
+@pytest.mark.parametrize("field", ["taxpayer_blind", "spouse_65_or_older", "spouse_blind"])
+@pytest.mark.asyncio
+async def test_missing_checkbox_answer_never_becomes_false(request_data, field):
+    request_data["profile"]["filing_status"] = "mfj"
+    del request_data["profile"][field]
+    result = await compute(request_data, NoTools())
+    assert result.status == "invalid_input"
+    assert not result.lines and not result.intermediates and not result.tool_calls
+
+
+@pytest.mark.parametrize("line,conflicting", [("1z", False), ("1z", True), ("2a", False)])
+@pytest.mark.asyncio
+async def test_repeated_document_or_direct_input_is_not_counted_twice(request_data, line, conflicting):
+    repeat = deepcopy(request_data["amounts"][line][0])
+    if conflicting:
+        repeat["value"] = "1.00"
+    request_data["amounts"][line].append(repeat)
+    result = await compute(request_data, NoTools())
+    assert result.status == "needs_human_review"
+    assert any(issue.code == "duplicate_input_source" for issue in result.issues)
+    assert not result.lines and not result.intermediates and not result.tool_calls

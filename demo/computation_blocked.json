@@ -2,7 +2,10 @@
   "tax_year": 2025,
   "profile": {
     "filing_status": "single",
-    "taxpayer_65_or_older": true
+    "taxpayer_65_or_older": true,
+    "taxpayer_blind": false,
+    "spouse_65_or_older": false,
+    "spouse_blind": false
   },
   "rules": {
     "approved": false,

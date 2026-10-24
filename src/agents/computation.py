@@ -80,6 +80,15 @@ def _preflight(request: ComputationRequest) -> list[Issue]:
     if p.filing_status == "mfs" and (p.spouse_65_or_older or p.spouse_blind):
         if not p.mfs_spouse_allowance_approved:
             issues.append(Issue(code="mfs_spouse_boxes", message="Rules must approve MFS spouse deduction boxes"))
+    for line, entries in request.amounts.items():
+        seen = set()
+        for entry in entries:
+            identities = {(s.kind, s.reference, s.field) for s in entry.sources}
+            if seen.intersection(identities):
+                issues.append(Issue(code="duplicate_input_source",
+                    message=f"Line {line} repeats a source field; resolve duplicates upstream"))
+                break
+            seen.update(identities)
     return issues
 
 
@@ -107,7 +116,7 @@ async def compute(request_data: dict | ComputationRequest, client: ToolClient) -
         references = output.get("rule_references")
         if not isinstance(references, list) or not references or not all(isinstance(r, str) and r for r in references):
             raise RuntimeError("Tool omitted rule references")
-        call = ToolCall(call_id=str(uuid4()), tool=tool, arguments=arguments, result=output)
+        call = ToolCall(call_id=str(uuid4()), output_key=line, tool=tool, arguments=arguments, result=output)
         calls.append(call)
         inherited = [s for dependency in depends_on for s in lines[dependency].sources]
         inherited.extend(sources or [])
@@ -171,7 +180,9 @@ async def compute(request_data: dict | ComputationRequest, client: ToolClient) -
 
     form_lines = {line: result for line, result in lines.items()
                   if line not in ("ss_adjustments", "income_before_ss")}
-    return ComputationResult(status="completed", lines=form_lines, tool_calls=calls)
+    intermediates = {line: result for line, result in lines.items() if line not in form_lines}
+    return ComputationResult(status="completed", lines=form_lines,
+                             intermediates=intermediates, tool_calls=calls)
 
 
 async def computation_node(state: dict) -> dict:

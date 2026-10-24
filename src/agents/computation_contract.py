@@ -65,9 +65,11 @@ class SourcedAmount(ContractModel):
 class Profile(ContractModel):
     filing_status: FilingStatus
     taxpayer_65_or_older: StrictBool
-    taxpayer_blind: StrictBool = False
-    spouse_65_or_older: StrictBool = False
-    spouse_blind: StrictBool = False
+    # All four checkbox answers are explicit. Unknown must not become False.
+    # Use False for spouse fields only when Rules confirms they are inapplicable.
+    taxpayer_blind: StrictBool
+    spouse_65_or_older: StrictBool
+    spouse_blind: StrictBool
     # Required for MFS because Social Security taxation changes with this answer.
     mfs_lived_with_spouse: StrictBool | None = None
     # Rules must explicitly approve counting spouse boxes on an MFS return.
@@ -115,6 +117,7 @@ class ComputationRequest(ContractModel):
 
 class ToolCall(ContractModel):
     call_id: str
+    output_key: str
     tool: str
     arguments: dict
     result: dict
@@ -137,6 +140,8 @@ class ComputationResult(ContractModel):
     status: Literal["completed", "needs_human_review", "invalid_input", "tool_error"]
     tax_year: Literal[2025] = 2025
     lines: dict[str, ComputedLine] = Field(default_factory=dict)
+    # Audit-only working values, never fields to render on the tax form.
+    intermediates: dict[str, ComputedLine] = Field(default_factory=dict)
     tool_calls: list[ToolCall] = Field(default_factory=list)
     issues: list[Issue] = Field(default_factory=list)
     # All successful results are drafts for Review, never filing instructions.

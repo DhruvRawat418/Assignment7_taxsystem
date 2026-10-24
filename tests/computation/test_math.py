@@ -8,7 +8,8 @@ from src.tools.computation_math import (
 
 
 def profile(status="single", **overrides):
-    data = {"filing_status": status, "taxpayer_65_or_older": True}
+    data = {"filing_status": status, "taxpayer_65_or_older": True,
+            "taxpayer_blind": False, "spouse_65_or_older": False, "spouse_blind": False}
     if status == "mfs":
         data["mfs_lived_with_spouse"] = False
     return {**data, **overrides}

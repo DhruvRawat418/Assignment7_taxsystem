@@ -70,7 +70,9 @@ adapt it at this boundary rather than rewriting other people's agents.
 
 - `tax_year`: exactly 2025.
 - `profile`: filing status `single`, `mfj`, `mfs`, `hoh`, or `qss`; age and
-  blindness flags already determined by Eligibility & Rules.
+  blindness flags already determined by Eligibility & Rules. All four age and
+  blindness booleans must be explicit; a missing answer never defaults to false.
+  Rules supplies false for spouse fields when they are inapplicable.
 - `rules`: explicit `approved`, nonempty citations, and any
   `blocking_conditions`. Missing clearance is never treated as approval.
 - `amounts`: all keys in the following table, each containing a **nonempty list**
@@ -101,6 +103,11 @@ document reference and field; direct input additionally needs an actor and a
 timezone-aware timestamp. Do not pass names, SSNs, raw documents, or API secrets
 to Computation: they are not needed for arithmetic and are outside this schema.
 
+Within one input line, separate entries may not share a source identity
+(`kind`, `reference`, `field`). A repeated W-2 field or repeated direct-input
+event is blocked for upstream resolution, even when the two amounts differ.
+Different documents have different references and are aggregated normally.
+
 For MFS, `mfs_lived_with_spouse` is required. Rules must explicitly approve
 `mfs_spouse_allowance_approved` before a spouse's age/blindness boxes can count.
 
@@ -123,7 +130,11 @@ derives a taxable IRA/pension portion from an indeterminate 1099-R.
 Only `completed` exposes `lines`. Every monetary line references an actual MCP
 `tool_call_id`, dependency lines, transitive original sources, and rule
 references. `tool_calls` contain the tool name, exact arguments, and returned
-result, including intermediate calculations. Treat this audit record as
+result, including intermediate calculations. Each call also has an `output_key`.
+`intermediates` exports the working values `income_before_ss` and `ss_adjustments`;
+combine `lines` and `intermediates` to walk the complete dependency graph, and
+render only `lines` on a tax form. Failure/blocked results expose neither map.
+Treat this audit record as
 sensitive application data when the team adds persistence and access control;
 the demo only writes it when an explicit `--output` destination is supplied.
 
@@ -183,7 +194,8 @@ calls; there is no in-process fallback that pretends to be MCP.
 Tests cover all filing statuses, deduction phaseout boundaries, Social Security
 thresholds and ordering, MFS treatment, qualified dividends, Decimal precision,
 multiple documents, taxes/credits/payments, provenance, blocked/incomplete inputs,
-tool failures, and a real LangGraph invocation using the actual stdio MCP server.
+duplicate source rejection, explicit checkbox answers, closed provenance
+dependencies, tool failures, and a real LangGraph invocation using the actual stdio MCP server.
 Tests use synthetic data and no model API calls. Full-system review loops,
 parallel reducers, persistent memory, UI, PDF output, and HITL resolution still
 belong to the team's integration work.
