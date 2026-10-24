@@ -1,0 +1,6 @@
+# Isolated module dependencies; merge with the team's requirements when integrating.
+mcp==1.30.0
+langgraph==1.2.17
+pydantic==2.14.1
+pytest==9.1.1
+pytest-asyncio==1.4.0
