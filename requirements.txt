@@ -1,0 +1,6 @@
+pydantic>=2.9,<3
+Pillow>=10.4,<13
+rapidocr-onnxruntime==1.4.4
+# Pin the runtime: 1.31.0 hung in OneDsTelemetry shutdown in the macOS parallel demo.
+onnxruntime==1.23.2
+numpy>=1.26,<3
