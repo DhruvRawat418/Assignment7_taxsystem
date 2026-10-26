@@ -138,3 +138,18 @@ See [integration contract](docs/DOCUMENT_EXTRACTION.md),
 [second review and fixes](docs/REVIEW_2026-10-24.md),
 [demo 1](demo/eval_case_1.md), [demo 2](demo/eval_case_2.md),
 and [AI-use disclosure](docs/AI_DISCLOSURE.md).
+## Computation Agent contribution
+
+Standalone Computation Agent, deterministic MCP tools, typed integration contract,
+synthetic fixtures, and tests are available on this branch.
+See [docs/COMPUTATION.md](docs/COMPUTATION.md) for scope, input/output fields,
+setup, and integration instructions.
+
+```bash
+python -m pip install -r requirements-computation.txt
+python -m demo.run_computation demo/computation_clean.json
+python -m pytest -c tests/computation/pytest.ini tests/computation -q
+```
+
+This contribution implements only Computation. The other agents, global graph,
+dashboard, PDF export, and complete application remain team integration work.
