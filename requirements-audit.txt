@@ -1,0 +1,3 @@
+# Python >= 3.11. Standalone Audit and unittest suite use only the standard library.
+# Team integration supplies an initialized MCP ToolClient and optionally LangGraph.
+# No LLM SDK or API key is required for this deterministic component.
