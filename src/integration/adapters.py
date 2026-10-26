@@ -36,9 +36,13 @@ def validate_intake(data):
             raise ValueError
         if not isinstance(data["facts"], dict) or not isinstance(data["amounts"], dict):
             raise ValueError
-        if len(json.dumps(data, allow_nan=False, default=lambda d: str(d) if isinstance(d, Decimal) else None)) > 1_000_000:
+        def encode(value):
+            if isinstance(value, Decimal):
+                return str(value)
+            raise TypeError("Unsupported state value")
+        if len(json.dumps(data, allow_nan=False, default=encode)) > 1_000_000:
             raise ValueError
-        _privacy_check(data["facts"])
+        _privacy_check(data)
         documents = data["documents"]
         if not isinstance(documents, list) or len(documents) > 64:
             raise ValueError

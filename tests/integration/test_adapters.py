@@ -86,3 +86,18 @@ def test_unknown_and_malformed_disposition_is_not_clearance():
         rules["box_dispositions"]["w2-1"]["1"] = disposition
         with pytest.raises(IntegrationError):
             prepare_packet(intake_data(), rules, {"w2-1": extracted()})
+
+
+@pytest.mark.parametrize("section", ["facts", "amounts"])
+def test_intake_rejects_non_json_objects_instead_of_serializing_them_as_null(section):
+    intake = intake_data()
+    intake[section]["unsupported"] = object()
+    with pytest.raises(IntegrationError):
+        validate_intake(intake)
+
+
+def test_privacy_boundary_checks_amount_provenance_not_only_facts():
+    intake = intake_data()
+    intake["amounts"]["2a"][0]["sources"][0]["reference"] = "person-123-45-6789"
+    with pytest.raises(IntegrationError):
+        validate_intake(intake)

@@ -23,6 +23,10 @@ def intake_data(documents=True):
     amounts = deepcopy(request["amounts"])
     if documents:
         del amounts["1z"], amounts["25a"]
+    else:
+        for line in ("1z", "25a"):
+            amounts[line][0]["sources"] = [dict(kind="user_input", reference="synthetic-intake",
+                field="confirmed " + line, entered_by="demo-user", recorded_at="2026-10-24T00:00:00Z")]
     return dict(facts={"filing_status": "single"}, amounts=amounts,
                 documents=[dict(document_id="w2-1", path="demo/w2_clean.jpg")] if documents else [])
 
