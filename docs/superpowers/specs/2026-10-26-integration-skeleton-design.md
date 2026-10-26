@@ -1,6 +1,6 @@
 # SilverFile integration skeleton
 
-Status: proposed for Yong's approval. Not a team-wide interface mandate.
+Status: approved by Yong on 2026-10-26. Not a team-wide interface mandate.
 
 ## Goal
 
