@@ -1,6 +1,6 @@
 # Audit component: first implementation scope
 
-Status: approved by Yong on 2026-10-26; implementing the standalone first version.
+Status: approved by Yong on 2026-10-26; standalone first version implemented and verified.
 
 ## Purpose and boundary
 

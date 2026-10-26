@@ -1,6 +1,6 @@
 """Audit's own boundary; does not redefine the team's global LangGraph state."""
 from datetime import datetime, timezone
-from decimal import Decimal, InvalidOperation, localcontext
+from decimal import Decimal, DecimalException, localcontext
 import json
 
 INPUT_LINES = ("1z", "2a", "2b", "3a", "3b", "4a", "4b", "5a", "5b", "6a",
@@ -32,14 +32,14 @@ def money(value):
         raise ValueError("Money too long")
     try:
         amount = Decimal(value)
-        if not amount.is_finite() or abs(amount) >= Decimal("1000000000000"):
+        if not amount.is_finite() or amount.copy_abs() >= Decimal("1000000000000"):
             raise ValueError("Money out of bounds")
         with localcontext() as context:
             context.prec = 40
             if amount != amount.quantize(Decimal("0.01")):
                 raise ValueError("Money precision")
         return amount
-    except InvalidOperation:
+    except DecimalException:
         raise ValueError("Invalid money") from None
 
 

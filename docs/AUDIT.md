@@ -43,6 +43,9 @@ different IDs identify the same upload. W-2 box 1 can support line 1z and box 2
 can support line 25a. The fact must match the input amount and a successful
 extraction with consistent document ID, SHA256, tax year and box. Every active
 document/fact must be accounted for; unreferenced uploads block review.
+Different source aliases (or uploaded copies sharing the same SHA256) cannot
+count one document box in separate monetary entries twice. Multiple supporting
+aliases within a single entry are allowed.
 
 Only the available **W-2 monetary extraction schema** is supported in this first
 adapter. Other document types require a separately reviewed adapter; they fail

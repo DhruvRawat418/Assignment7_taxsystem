@@ -80,3 +80,21 @@ def clean_state():
         audit_source_bindings=[dict(reference="synthetic-w2", field="box 1", document_id="w2-1", amount_key="box_1"),
                                dict(reference="synthetic-w2", field="box 2", document_id="w2-1", amount_key="box_2")],
     )
+
+
+def aliased_duplicate_state():
+    """Two input aliases refer to ONE $25k fact, not two independent W-2s."""
+    state = clean_state()
+    request, result = state["computation_input"], state["computation_result"]
+    original = deepcopy(request["amounts"]["1z"][0]["sources"][0])
+    alias = dict(original, reference="second-alias-for-same-w2")
+    request["amounts"]["1z"] = [dict(value="25000.00", sources=[original]),
+                                 dict(value="25000.00", sources=[alias])]
+    state["audit_source_bindings"].append(dict(reference=alias["reference"], field=alias["field"],
+                                              document_id="w2-1", amount_key="box_1"))
+    state["extractions"]["w2-1"]["record"]["amounts"]["box_1"]["value"] = "25000.00"
+    result["tool_calls"][0]["arguments"]["values"] = ["25000.00", "25000.00"]
+    for line in [*result["lines"].values(), *result["intermediates"].values()]:
+        if original in line["sources"]:
+            line["sources"].append(deepcopy(alias))
+    return state

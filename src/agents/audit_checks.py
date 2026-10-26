@@ -91,7 +91,7 @@ def _check(state):
     for line, entries in amounts.items():
         if not isinstance(entries, list) or not entries or len(entries) > 128:
             raise ValueError("Explicit sourced amounts required")
-        seen, inherited[line] = set(), set()
+        seen, canonical_seen, inherited[line] = set(), set(), set()
         for entry in entries:
             amount = money(entry["value"])
             if line != "8" and amount < 0:
@@ -104,6 +104,7 @@ def _check(state):
             if seen.intersection(identities):
                 problems.append(issue("duplicate_input_source", line, "eligibility_rules"))
             seen.update(identities)
+            entry_facts = set()
             for source in sources:
                 if source["kind"] == "document":
                     problem = _document_check(state, source, entry["value"], line)
@@ -113,6 +114,15 @@ def _check(state):
                         binding = next(b for b in state["audit_source_bindings"] if
                                        (b.get("reference"), b.get("field")) == (source["reference"], source["field"]))
                         verified_fields.add((binding["document_id"], binding["amount_key"]))
+                        # Aliases and repeat uploads of the same file do not
+                        # create independent monetary facts. Multiple supporting
+                        # aliases within ONE entry are allowed; separate entries
+                        # must not consume that same evidence twice.
+                        extraction = state["extractions"][binding["document_id"]]
+                        entry_facts.add((extraction["sha256"].lower(), binding["amount_key"]))
+            if canonical_seen.intersection(entry_facts):
+                problems.append(issue("duplicate_document_fact", line, "eligibility_rules"))
+            canonical_seen.update(entry_facts)
 
     # The integration layer must provide only active documents here. Superseded
     # uploads belong in historical storage, not silently ignored active evidence.

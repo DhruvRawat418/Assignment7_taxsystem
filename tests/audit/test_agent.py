@@ -3,7 +3,7 @@ import asyncio
 from copy import deepcopy
 from decimal import Decimal
 import unittest
-from tests.audit.fixtures import clean_state
+from tests.audit.fixtures import clean_state, aliased_duplicate_state
 
 from src.agents.audit import audit, make_audit_node
 
@@ -154,6 +154,32 @@ class AuditTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await audit(state, SyntheticToolClient()))["status"], "revision_required")
         self.assertEqual(state["computation_result"]["lines"]["16"]["value"], "9000.00")
         self.assertEqual((await audit(original, SyntheticToolClient()))["status"], "passed")
+
+    async def test_alias_duplicate_that_sums_correctly_still_requires_revision(self):
+        result = await audit(aliased_duplicate_state(), SyntheticToolClient())
+        self.assertEqual(result["status"], "revision_required")
+        self.assertIn("duplicate_document_fact", {i["code"] for i in result["issues"]})
+
+    async def test_extreme_input_exponent_returns_nonpassing_result(self):
+        state = clean_state()
+        state["computation_input"]["amounts"]["1z"][0]["value"] = "1e1000000"
+        try:
+            result = await audit(state, SyntheticToolClient())
+        except Exception as error:
+            self.fail("Audit leaked " + type(error).__name__)
+        self.assertEqual(result["status"], "revision_required")
+
+    async def test_two_supporting_aliases_within_one_amount_are_not_double_counting(self):
+        state = clean_state()
+        original = deepcopy(state["computation_input"]["amounts"]["1z"][0]["sources"][0])
+        alias = dict(original, reference="same-value-confirmation")
+        state["computation_input"]["amounts"]["1z"][0]["sources"].append(alias)
+        state["audit_source_bindings"].append(dict(reference=alias["reference"], field=alias["field"],
+                                                  document_id="w2-1", amount_key="box_1"))
+        for line in [*state["computation_result"]["lines"].values(), *state["computation_result"]["intermediates"].values()]:
+            if original in line["sources"]:
+                line["sources"].append(deepcopy(alias))
+        self.assertEqual((await audit(state, SyntheticToolClient()))["status"], "passed")
 
 
 if __name__ == "__main__":

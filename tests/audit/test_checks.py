@@ -1,7 +1,8 @@
 """Structural checks must reject incomplete or self-inconsistent audit packets."""
 import unittest
 from copy import deepcopy
-from tests.audit.fixtures import clean_state
+from decimal import Decimal
+from tests.audit.fixtures import clean_state, aliased_duplicate_state
 
 from src.agents.audit_checks import check_state
 
@@ -151,6 +152,26 @@ class CheckTests(unittest.TestCase):
         state = clean_state()
         state["computation_input"]["amounts"]["2a"][0]["sources"][0]["recorded_at"] = "2026-10-24T00:00:00+00:00"
         self.assertEqual(check_state(state), [])
+
+    def test_two_aliases_cannot_double_count_one_document_fact(self):
+        self.assertIn("duplicate_document_fact", self.codes(aliased_duplicate_state()))
+
+    def test_extreme_exponents_are_sanitized_at_every_money_boundary(self):
+        for value in ("1e1000000", "-1e1000000", Decimal("1e1000000")):
+            for location in ("input", "line", "extraction"):
+                state = clean_state()
+                if location == "input":
+                    state["computation_input"]["amounts"]["1z"][0]["value"] = value
+                elif location == "line":
+                    state["computation_result"]["lines"]["1z"]["value"] = value
+                else:
+                    state["extractions"]["w2-1"]["record"]["amounts"]["box_1"]["value"] = value
+                with self.subTest(value=str(value), location=location):
+                    try:
+                        issues = check_state(state)
+                    except Exception as error:
+                        self.fail("Malformed money escaped as " + type(error).__name__)
+                    self.assertIn("invalid_contract", {i["code"] for i in issues})
 
 
 if __name__ == "__main__":
