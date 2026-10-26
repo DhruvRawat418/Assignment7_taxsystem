@@ -1,5 +1,37 @@
 # Assignment7_taxsystem
 
+## Integration proposal (`yong/integration`)
+
+This branch preserves the existing Extraction (Xinrui), Computation (Xiaolong)
+and deterministic Audit (Yong) histories and adds a **runnable integration
+skeleton**, not the finished six-agent assignment. Original worker source files
+are unchanged. Main and the contributors' branches are not modified.
+
+```bash
+git clone --branch yong/integration https://github.com/DhruvRawat418/Assignment7_taxsystem.git
+cd Assignment7_taxsystem
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-integration.txt
+python run.py --readiness
+python run.py                         # intentionally blocked; exit code 2
+python run.py --synthetic-demo        # actual MCP + Audit; other providers test-only
+python run.py --synthetic-hitl-demo   # actual interrupt/resume, driven by a test
+python -m pytest -q -m 'not ocr'
+```
+
+The supervisor has conditional routes, parallel Extraction workers with a reducer,
+review/revise limits, no-progress detection and guarded human resolution.
+Missing Intake, Rules or adversarial-review providers **block** execution; no
+clearance is invented. A successful demo means only `ready_for_human_review`,
+not an approved, rendered or filed return.
+
+See [integration setup, interfaces and remaining work](docs/INTEGRATION.md) and
+[AI-use disclosure](docs/AI_DISCLOSURE_INTEGRATION.md). The original component
+guides follow below; their standalone limitations still apply. Real OCR on this
+host is blocked by the pinned ONNX runtime's macOS library requirements (see the
+integration guide), not hidden by deleting or weakening tests.
+
 ## Yong Cai: Review / Audit component (`yong/audit`)
 
 This branch adds **only the first, deterministic Audit component** for SilverFile.
