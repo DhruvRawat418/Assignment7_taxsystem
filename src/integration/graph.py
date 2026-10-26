@@ -8,11 +8,13 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send, interrupt
 
 from src.agents.audit import input_fingerprint
-from src.integration.adapters import prepare_packet, validate_intake, _privacy_check
+from src.document_extraction.models import ExtractionResult
+from src.integration.adapters import prepare_packet, validate_intake, validate_payload
 from src.integration.contracts import IntegrationError, ProviderResult
 from src.integration.runtime import default_runtime
 from src.integration.state import (
     CaseState, active_extractions, context_fingerprint, digest, invalidate, progress_fingerprint,
+    semantic_digest,
 )
 
 STAGES = {"intake", "rules", "compute", "audit", "adversarial", "human", "complete", "extract"}
@@ -28,7 +30,7 @@ def _issue(code, owner="orchestrator"):
 
 
 def _blocked(code, owner="orchestrator"):
-    return dict(status="blocked", next_stage="end", issues=[_issue(code, owner)])
+    return dict(status="blocked", next_stage="end", issues=[_issue(code, owner)], human_response={})
 
 
 async def _call(function, state):
@@ -63,20 +65,24 @@ def build_graph(providers=None, checkpointer=None, *, max_review_attempts=3, max
         if function is None:
             return None, _blocked("provider_not_configured", owner)
         try:
-            output = await _call(function, state)
+            snapshot = dict(state)
+            if state.get("human_response", {}).get("owner") != owner:
+                snapshot["human_response"] = {}
+            output = await _call(function, snapshot)
             if not isinstance(output, ProviderResult):
                 return None, _blocked("invalid_provider_result", owner)
+            validate_payload(output.data)
             if output.status == "ready":
                 return output, None
             issues = [_issue(code, owner) for code in output.issue_codes[:128]] or [_issue("provider_requires_attention", owner)]
             if output.status == "needs_human_review":
-                return None, dict(status="running", next_stage="human", pending_owner=owner, issues=issues)
+                return None, dict(status="running", next_stage="human", pending_owner=owner, issues=issues, human_response={})
             if output.status == "needs_input":
                 # Only Intake is allowed to engage the taxpayer. Other owners
                 # hand missing-fact requests back to it, not a side dialogue.
                 if owner != "intake":
-                    return None, dict(status="running", next_stage="intake", issues=issues)
-                return None, dict(status="needs_input", next_stage="end", pending_owner="intake", issues=issues)
+                    return None, dict(status="running", next_stage="intake", issues=issues, human_response={})
+                return None, dict(status="needs_input", next_stage="end", pending_owner="intake", issues=issues, human_response={})
             return None, _blocked("provider_not_configured" if output.status == "not_configured" else "provider_failed", owner)
         except asyncio.CancelledError:
             raise
@@ -118,7 +124,8 @@ def build_graph(providers=None, checkpointer=None, *, max_review_attempts=3, max
             changed = digest(data) != digest(state.get("intake_snapshot", {}))
             return dict(intake_snapshot=data, documents=data["documents"], document_registry=registry,
                         revision=state.get("revision", 0) + int(changed), rules_output={},
-                        human_response={} if changed else state.get("human_response", {}),
+                        human_response={},
+                        human_resolution_fingerprint="" if changed else state.get("human_resolution_fingerprint", ""),
                         next_stage="extract", status="running", **invalidate())
         except IntegrationError as error:
             return _blocked(error.code, error.owner)
@@ -127,10 +134,12 @@ def build_graph(providers=None, checkpointer=None, *, max_review_attempts=3, max
         document_id = state["document"]["document_id"]
         try:
             output = await _call(p.extraction, state)
+            validate_payload(output)
             results = output["extractions"]
             if set(output) != {"extractions"} or set(results) != {document_id} or results[document_id].get("document_id") != document_id:
                 raise ValueError
-            return {"extractions": results}
+            result = ExtractionResult.model_validate(results[document_id])
+            return {"extractions": {document_id: result.model_dump(mode="json")}}
         except asyncio.CancelledError:
             raise
         except Exception:
@@ -151,7 +160,7 @@ def build_graph(providers=None, checkpointer=None, *, max_review_attempts=3, max
             return stop
         try:
             packet = prepare_packet(state["intake_snapshot"], output.data, active_extractions(state))
-            return {**invalidate(), "rules_output": deepcopy(output.data), "next_stage": "compute", "issues": [],
+            return {**invalidate(), "human_response": {}, "rules_output": deepcopy(output.data), "next_stage": "compute", "issues": [],
                     "computation_input": packet["computation_input"]}
         except IntegrationError as error:
             return _blocked(error.code, error.owner)
@@ -162,6 +171,7 @@ def build_graph(providers=None, checkpointer=None, *, max_review_attempts=3, max
             snapshot = dict(state, **invalidate())
             snapshot["computation_input"] = packet["computation_input"]
             output = await _call(p.computation, snapshot)
+            validate_payload(output)
             if set(output) != {"computation_result"} or not isinstance(output["computation_result"], dict):
                 raise ValueError
             result = output["computation_result"]
@@ -197,6 +207,7 @@ def build_graph(providers=None, checkpointer=None, *, max_review_attempts=3, max
                 return _blocked("stale_computation", "compute")
             packet = _audit_view(_packet(state))
             output = await _call(p.audit, packet)
+            validate_payload(output)
             if set(output) != {"audit_result"} or not isinstance(output["audit_result"], dict):
                 raise ValueError
             result = output["audit_result"]
@@ -221,8 +232,8 @@ def build_graph(providers=None, checkpointer=None, *, max_review_attempts=3, max
         if set(output.data) != {"findings"} or not isinstance(findings, list):
             return _blocked("invalid_review_result", "adversarial")
         if findings:
-            return dict(adversarial_result=deepcopy(output.data), **findings_route(findings))
-        return dict(adversarial_result={"findings": []}, next_stage="complete", issues=[])
+            return dict(adversarial_result=deepcopy(output.data), human_response={}, **findings_route(findings))
+        return dict(adversarial_result={"findings": []}, human_response={}, next_stage="complete", issues=[])
 
     def complete(state):
         try:
@@ -245,15 +256,16 @@ def build_graph(providers=None, checkpointer=None, *, max_review_attempts=3, max
         response = interrupt(dict(case_id=state["case_id"], revision=state["revision"], owner=owner,
                                   issue_codes=[i["code"] for i in state.get("issues", [])], actions=["resolve", "stop"]))
         if isinstance(response, dict) and response == {"action": "stop"}:
-            return dict(status="stopped", next_stage="end")
+            return dict(status="stopped", next_stage="end", human_response={})
         try:
             if (not isinstance(response, dict) or set(response) != {"action", "owner", "revision", "response"}
                     or response["action"] != "resolve" or response["owner"] != owner
                     or type(response["revision"]) is not int or response["revision"] != state["revision"]
                     or not isinstance(response["response"], dict)):
                 raise ValueError
-            _privacy_check(response["response"])
-            return dict(human_response=deepcopy(response), status="running", next_stage=owner)
+            validate_payload(response["response"], limit=1_000_000)
+            return dict(human_response=deepcopy(response), human_resolution_fingerprint=semantic_digest(response),
+                        status="running", next_stage=owner)
         except (ValueError, TypeError, RecursionError):
             return _blocked("invalid_human_response")
 

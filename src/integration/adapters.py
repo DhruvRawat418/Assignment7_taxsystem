@@ -15,7 +15,7 @@ def _privacy_check(value, key=""):
     if isinstance(value, dict):
         for child_key, child in value.items():
             _privacy_check(child, str(child_key))
-    elif isinstance(value, list):
+    elif isinstance(value, (list, tuple)):
         for child in value:
             _privacy_check(child, key)
     elif isinstance(value, str):
@@ -29,6 +29,23 @@ def _privacy_check(value, key=""):
                 raise IntegrationError("unsafe_identifier", "intake") from None
 
 
+def validate_payload(data, *, limit=2_000_000):
+    """Reject invalid/non-finite worker JSON before it enters a checkpoint."""
+    def encode(value):
+        if isinstance(value, Decimal) and value.is_finite():
+            return str(value)
+        raise TypeError("Unsupported state value")
+    try:
+        encoded = json.dumps(data, sort_keys=True, allow_nan=False, default=encode).encode("utf-8")
+        if len(encoded) > limit:
+            raise ValueError
+        _privacy_check(data)
+    except IntegrationError:
+        raise
+    except (ValueError, TypeError, RecursionError, OverflowError):
+        raise IntegrationError("invalid_worker_payload", "orchestrator") from None
+
+
 def validate_intake(data):
     """Validate before persisting provider output. No user dialogue or tax rules."""
     try:
@@ -36,13 +53,7 @@ def validate_intake(data):
             raise ValueError
         if not isinstance(data["facts"], dict) or not isinstance(data["amounts"], dict):
             raise ValueError
-        def encode(value):
-            if isinstance(value, Decimal):
-                return str(value)
-            raise TypeError("Unsupported state value")
-        if len(json.dumps(data, allow_nan=False, default=encode)) > 1_000_000:
-            raise ValueError
-        _privacy_check(data)
+        validate_payload(data, limit=1_000_000)
         documents = data["documents"]
         if not isinstance(documents, list) or len(documents) > 64:
             raise ValueError

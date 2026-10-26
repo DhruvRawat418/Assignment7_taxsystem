@@ -29,6 +29,7 @@ class CaseState(TypedDict, total=False):
     projection_notes: list
     pending_owner: str
     human_response: dict
+    human_resolution_fingerprint: str
     issues: list
     hops: int
     review_attempts: int
@@ -55,7 +56,7 @@ def context_fingerprint(state):
                    "extractions": active_extractions(state)})
 
 
-def progress_fingerprint(state):
+def semantic_digest(value):
     volatile = {"timestamp", "recorded_at", "checked_at", "call_id", "tool_call_id", "input_fingerprint"}
     def strip(value):
         if isinstance(value, dict):
@@ -63,9 +64,14 @@ def progress_fingerprint(state):
         if isinstance(value, list):
             return [strip(v) for v in value]
         return value
-    return digest(strip({key: state.get(key) for key in (
+    return digest(strip(value))
+
+
+def progress_fingerprint(state):
+    return semantic_digest({key: state.get(key) for key in (
         "next_stage", "pending_owner", "intake_snapshot", "rules_output", "computation_result",
-        "audit_result", "adversarial_result", "issues")} | {"active": active_extractions(state)}))
+        "audit_result", "adversarial_result", "issues", "human_resolution_fingerprint")} |
+        {"active": active_extractions(state)})
 
 
 def invalidate():
@@ -78,5 +84,5 @@ def new_case(case_id):
         raise IntegrationError("invalid_case_id", "orchestrator")
     return dict(case_id=case_id, mode="live", status="running", next_stage="intake", revision=0,
                 intake_snapshot={}, documents=[], document_registry={}, extractions={}, rules_output={},
-                pending_owner="", human_response={}, issues=[], hops=0, review_attempts=0,
+                pending_owner="", human_response={}, human_resolution_fingerprint="", issues=[], hops=0, review_attempts=0,
                 seen_progress={}, events=[], **invalidate())

@@ -116,7 +116,7 @@ async def test_actual_interrupt_and_valid_resume_reinvoke_rules():
     result = await g.ainvoke(Command(resume=dict(action="resolve", owner="rules", revision=payload["revision"],
                                                response={"resolution": "verified"})), c)
     assert result["status"] == "ready_for_human_review"
-    assert result["human_response"]["owner"] == "rules"
+    assert not result["human_response"]  # Consumed once by Rules, not retained as a reusable approval.
 
 
 @pytest.mark.asyncio
@@ -276,3 +276,64 @@ async def test_new_intake_revision_cannot_reuse_prior_human_resolution():
     assert result["__interrupt__"]
     assert result["__interrupt__"][0].value["revision"] == 2
     assert seen[-1] == (2, False)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("owner", ["extraction", "computation", "audit", "adversarial"])
+async def test_malformed_worker_output_cannot_poison_checkpoint(owner):
+    def extraction(state):
+        output = fake_extract(state)
+        output["extractions"][state["document"]["document_id"]]["record"]["amounts"]["1"]["value"] = float("nan")
+        return output
+    async def computation(state):
+        output = await fake_compute(state)
+        output["computation_result"]["bad_metadata"] = float("nan")
+        return output
+    async def audit(packet):
+        output = await fake_audit(packet)
+        output["audit_result"]["bad_metadata"] = float("nan")
+        return output
+    async def adversarial(state):
+        return ProviderResult("ready", {"findings": [{"code": "bad", "route_to": "rules", "value": float("nan")}]})
+    bad = dict(extraction=extraction, computation=computation, audit=audit, adversarial=adversarial)
+    g, c = graph(providers(**{owner: bad[owner]})), config("malformed")
+    result = await g.ainvoke(new_case("malformed"), c)
+    assert result["status"] == "blocked"
+    assert "nan" not in str(result).lower()
+    assert not g.get_state(c).next
+    resumed = await g.ainvoke(None, c)
+    assert resumed["status"] == "blocked"
+
+
+@pytest.mark.asyncio
+async def test_consumed_human_resolution_cannot_resolve_a_later_rules_issue():
+    async def review(state):
+        return ProviderResult("ready", {"findings": [{"code": "new_rules_conflict", "route_to": "rules"}]})
+    g, c = graph(providers(rules=human_rules, adversarial=review)), config("one-use")
+    paused = await g.ainvoke(new_case("one-use"), c)
+    revision = paused["__interrupt__"][0].value["revision"]
+    result = await g.ainvoke(Command(resume=dict(action="resolve", owner="rules", revision=revision,
+                                               response={"resolution": "verified"})), c)
+    assert result["__interrupt__"]
+    assert result["__interrupt__"][0].value["owner"] == "rules"
+    assert not result.get("human_response")
+
+
+@pytest.mark.asyncio
+async def test_distinct_human_clarifications_count_as_progress_at_default_limits():
+    answers = []
+    async def rules(state):
+        answer = state.get("human_response", {}).get("response", {}).get("answer")
+        if answer:
+            answers.append(answer)
+        if answer == "complete":
+            return ProviderResult("ready", rules_data())
+        return ProviderResult("needs_human_review", issue_codes=("clarify_rules",))
+    g, c = graph(providers(rules=rules)), config("clarifications")
+    result = await g.ainvoke(new_case("clarifications"), c)
+    for answer in ("first-fact", "second-fact", "complete"):
+        payload = result["__interrupt__"][0].value
+        result = await g.ainvoke(Command(resume=dict(action="resolve", owner="rules", revision=payload["revision"],
+                                                   response={"answer": answer})), c)
+    assert result["status"] == "ready_for_human_review"
+    assert answers == ["first-fact", "second-fact", "complete"]

@@ -76,6 +76,9 @@ Provider errors become fixed application codes, not raw exceptions. Provider cal
 have 60-second wrapper timeouts. Cancellation of a synchronous Python thread does
 not forcibly kill underlying work: providers must add their own bounded I/O and
 avoid external side effects. This is **not** a sandbox for untrusted Python code.
+Worker payloads must be bounded, finite JSON before checkpoint persistence;
+Extraction additionally passes its existing typed result model. Malformed
+responses become sanitized failures instead of poisoning the next checkpoint.
 
 `needs_input` routes back to Intake; Intake returning it stops with `needs_input`.
 `needs_human_review` invokes a real interrupt. Missing providers and failures block.
@@ -157,6 +160,9 @@ state = await graph.ainvoke(Command(resume={
 Only a matching owner/current integer revision and object response is accepted.
 The response is information for the owning worker, **not approval or a state
 patch**. That worker must independently validate it and return its own output.
+Only its named owner receives it, and it is consumed once; later conflicts need
+fresh resolution. A semantic digest of the last resolution counts meaningful new
+answers as progress without retaining the answer as a reusable approval.
 `True`, `{"approved":true}` and stale revisions cannot bypass clearance.
 Authentication/authorization of the human and duplicate-click handling belong to
 the eventual UI; the in-process CLI does not provide them. Default `InMemorySaver`
@@ -169,6 +175,10 @@ On the integration host, Python 3.12, MCP 1.30.0, LangGraph 1.2.17 and Pydantic
 2.14.1 were used. CLI tests start actual local MCP sessions. Graph tests use
 explicit worker doubles to test routing, not correctness of tax rules. Parallel
 overlap is tested with a two-worker barrier rather than guessed from timing.
+Final verification: the non-OCR suite had **222 passed, 8 deselected, 21 subtests
+passed**. The complete suite had **222 passed, 8 errors, 21 subtests passed**;
+the eight setup errors are the native runtime issue below. This is not a fully
+green release/merge claim. See [review and scope decisions](INTEGRATION_VERIFICATION.md).
 
 **Known baseline issue:** this host runs macOS 13.0. The inherited pinned
 `onnxruntime==1.23.2` macOS wheel fails to import because the system `libc++` lacks
