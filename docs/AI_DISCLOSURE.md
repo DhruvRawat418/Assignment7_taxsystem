@@ -8,6 +8,8 @@ and used test failures to revise OCR label matching and the example handoff loop
 During a second review, Codex added edge-case tests, corrected year/identifier
 classification and unreadable-amount handling, and reran the component in a fresh
 isolated environment with 77 tests passing.
+Codex later simplified validation and exception handling at my request, retaining
+the extraction rules and regression tests.
 The extractor uses RapidOCR/ONNX locally; it does not use an LLM to infer tax values
 or perform tax calculations. The committed examples and test results document the
 implemented behavior and its limits. This paragraph covers this contribution only;

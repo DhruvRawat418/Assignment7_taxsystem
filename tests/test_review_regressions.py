@@ -91,28 +91,24 @@ def test_multiple_space_unsafe_ssn_is_rejected_without_echoing():
     assert "6789" not in result.model_dump_json()
 
 
-def test_ocr_initialization_failure_is_a_review_result():
+def test_ocr_initialization_error_reaches_caller():
     def broken_factory():
         raise RuntimeError("model file unavailable")
 
-    update = make_extraction_node(broken_factory)({"document": {
-        "document_id": "init-failure", "path": str(ROOT/"demo/w2_clean.jpg")}})
-    result = update["extractions"]["init-failure"]
-    assert result["status"] == "needs_review" and result["record"] is None
-    assert result["issues"][0]["code"] == "ocr_failed"
+    with pytest.raises(RuntimeError, match="model file unavailable"):
+        make_extraction_node(broken_factory)({"document": {
+            "document_id": "init-failure", "path": str(ROOT/"demo/w2_clean.jpg")}})
 
 
-def test_ocr_read_failure_is_a_review_result():
+def test_ocr_read_error_reaches_caller():
     class BrokenReader:
         name = "test"
 
         def read(self, image):
             raise RuntimeError("failed inference")
 
-    result = extract_w2(ROOT/"demo/w2_clean.jpg", "read-failure", engine=BrokenReader())
-    assert result.status == "needs_review"
-    assert result.record is None
-    assert result.sha256
+    with pytest.raises(RuntimeError, match="failed inference"):
+        extract_w2(ROOT/"demo/w2_clean.jpg", "read-failure", engine=BrokenReader())
 
 
 @pytest.mark.ocr

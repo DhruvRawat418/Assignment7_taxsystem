@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Protocol
 
 import numpy as np
-from PIL import Image, ImageOps, UnidentifiedImageError
+from PIL import Image, ImageOps
 
 MAX_BYTES = 20 * 1024 * 1024
 MAX_PIXELS = 20_000_000
@@ -40,17 +40,14 @@ def load_image(path: str | Path) -> tuple[bytes, Image.Image]:
         raw = stream.read(MAX_BYTES + 1)
     if len(raw) > MAX_BYTES:
         raise ValueError("Image exceeds 20 MiB.")
-    try:
-        with Image.open(BytesIO(raw)) as original:
-            if original.format not in {"PNG", "JPEG", "WEBP"}:
-                raise ValueError("Use a single PNG, JPEG, or WEBP image.")
-            if original.width * original.height > MAX_PIXELS:
-                raise ValueError("Image exceeds 20 million pixels.")
-            if getattr(original, "n_frames", 1) != 1:
-                raise ValueError("Use one document copy per image.")
-            return raw, ImageOps.exif_transpose(original).convert("RGB")
-    except (UnidentifiedImageError, Image.DecompressionBombError) as exc:
-        raise ValueError("Image cannot be decoded safely.") from exc
+    with Image.open(BytesIO(raw)) as original:
+        if original.format not in {"PNG", "JPEG", "WEBP"}:
+            raise ValueError("Use a single PNG, JPEG, or WEBP image.")
+        if original.width * original.height > MAX_PIXELS:
+            raise ValueError("Image exceeds 20 million pixels.")
+        if getattr(original, "n_frames", 1) != 1:
+            raise ValueError("Use one document copy per image.")
+        return raw, ImageOps.exif_transpose(original).convert("RGB")
 
 
 class RapidOCREngine:

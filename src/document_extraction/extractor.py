@@ -4,7 +4,7 @@ from __future__ import annotations
 import hashlib
 import re
 from datetime import datetime, timezone
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 from pathlib import Path
 
 from .models import ExtractionResult, Issue, MoneyFact, Source, TextFact, W2Record
@@ -37,24 +37,16 @@ LABEL_CONTINUATIONS = {
 }
 
 
-def parse_money(text: str) -> Decimal:
+def parse_money(text: str) -> Decimal | None:
     """No OCR character repair, rounding, arithmetic, or inferred zeroes."""
     text = text.strip()
-    if not MONEY.fullmatch(text):
-        raise ValueError("Amount is not an unambiguous nonnegative dollar value.")
-    try:
+    if MONEY.fullmatch(text):
         return Decimal(text.replace("$", "").replace(",", "").strip())
-    except InvalidOperation as exc:
-        raise ValueError("Invalid decimal amount.") from exc
+    return None
 
 
 def _matches(token: Token, pattern: str) -> bool:
     return re.search(pattern, re.sub(r"[^a-z0-9]", "", token.text.lower())) is not None
-
-
-def _union(tokens: list[Token]) -> tuple[float, float, float, float]:
-    return (min(t.bbox[0] for t in tokens), min(t.bbox[1] for t in tokens),
-            max(t.bbox[2] for t in tokens), max(t.bbox[3] for t in tokens))
 
 
 def _field_region(label: Token, anchors: list[Token], image_size: tuple[int, int]):
@@ -82,21 +74,24 @@ def transcribe_tokens(
     tokens: list[Token], *, document_id: str, sha256: str,
     image_size: tuple[int, int], engine: str, min_confidence: float = .90,
 ) -> ExtractionResult:
-    """Pure parser, separately testable from OCR; tokens are untrusted input."""
-    if not 0 <= min_confidence <= 1:
-        raise ValueError("min_confidence must be between 0 and 1.")
+    """Internal OCR parser; image/config validation belongs to extract_w2."""
     now = datetime.now(timezone.utc)
     issues: list[Issue] = []
     anchors = [t for t in tokens if any(_matches(t, p) for p in BOUNDARIES)]
-    regions = [_field_region(t, anchors, image_size) for t in anchors
-               if any(_matches(t, p) for p in LABELS.values())]
+    regions = {t: _field_region(t, anchors, image_size) for t in anchors
+               if any(_matches(t, p) for p in LABELS.values())}
+    money_values = {}
+    for token in tokens:
+        value = parse_money(token.text)
+        if value is not None:
+            money_values[token] = value
 
     # Validate before constructing records or persisting raw evidence.
     # A nine-digit dollar amount inside a labeled monetary box is not an SSN.
     # Formatted SSNs remain blocked even when placed inside a monetary box.
     ssns = [(t, m) for t in tokens for m in SSN.finditer(t.text)
-            if not (MONEY.fullmatch(t.text.strip())
-                    and any(_inside(t, region) for region in regions))]
+            if not (t in money_values
+                    and any(_inside(t, region) for region in regions.values()))]
     if any(not 900 <= int(m[1]) <= 999 for _, m in ssns):
         return ExtractionResult(document_id=document_id, sha256=sha256,
             status="rejected", issues=(Issue(code="unsafe_ssn", field="employee_ssn",
@@ -108,18 +103,22 @@ def transcribe_tokens(
             status="needs_review", issues=(Issue(code="unrecognized_document",
                 message="A single W-2 copy could not be identified. Ask Intake for a clearer W-2 image."),))
 
-    def source(box: str, evidence: list[Token], raw_text: str | None = None) -> Source:
+    def source(box: str, evidence: list[Token]) -> Source:
         return Source(document_id=document_id, sha256=sha256, box=box,
-            bbox=_union(evidence), image_size=image_size,
-            raw_text=raw_text or " | ".join(t.text for t in evidence),
+            bbox=(min(t.bbox[0] for t in evidence), min(t.bbox[1] for t in evidence),
+                  max(t.bbox[2] for t in evidence), max(t.bbox[3] for t in evidence)),
+            image_size=image_size, raw_text=" | ".join(t.text for t in evidence),
             confidence=min(t.confidence for t in evidence), engine=engine, timestamp=now)
 
     def text_fact(field: str, candidates: list[tuple[str, Token]], *, required: bool = True) -> TextFact | None:
         values = {value for value, _ in candidates}
-        if not values and not required:
+        if not values:
+            if required:
+                issues.append(Issue(code="missing_field", field=field,
+                    message=f"{field} needs a clear, unique printed value."))
             return None
-        if len(values) != 1:
-            issues.append(Issue(code="missing_field" if not values else "ambiguous_field",
+        if len(values) > 1:
+            issues.append(Issue(code="ambiguous_field",
                 field=field, message=f"{field} needs a clear, unique printed value."))
             return None
         value, token = candidates[0]
@@ -133,7 +132,7 @@ def transcribe_tokens(
     for token in tokens:
         # A year must be a standalone heading/footer value or explicitly part of
         # the form title. A monetary value or SSN suffix is never year evidence.
-        if any(_inside(token, region) for region in regions):
+        if any(_inside(token, region) for region in regions.values()):
             continue
         text = SSN.sub("", EIN.sub("", token.text)).strip()
         compact = re.sub(r"[^a-z0-9]", "", text.lower())
@@ -152,10 +151,14 @@ def transcribe_tokens(
     amounts: dict[str, MoneyFact] = {}
     for box, pattern in LABELS.items():
         labels = [t for t in tokens if _matches(t, pattern)]
-        if len(labels) != 1:
-            if len(labels) > 1 or box in {"1", "2"}:
-                issues.append(Issue(code="multiple_copies" if len(labels) > 1 else "missing_box",
+        if not labels:
+            if box in {"1", "2"}:
+                issues.append(Issue(code="missing_box",
                     field=f"box_{box}", message=f"Box {box} needs one clearly identified label. Use one W-2 copy per image."))
+            continue
+        if len(labels) > 1:
+            issues.append(Issue(code="multiple_copies", field=f"box_{box}",
+                message=f"Box {box} has multiple labels. Use one W-2 copy per image."))
             continue
         label = labels[0]
         # A merged label containing the next box label is unsafe to partition.
@@ -163,26 +166,30 @@ def transcribe_tokens(
             issues.append(Issue(code="merged_labels", field=f"box_{box}",
                 message="Adjacent box labels merged during OCR. Supply a higher-resolution crop."))
             continue
-        region = _field_region(label, anchors, image_size)
+        region = regions[label]
         content = [t for t in tokens if t is not label and _inside(t, region)]
-        candidates = [t for t in content if MONEY.fullmatch(t.text.strip())]
-        unreadable = [t for t in content if t not in candidates
+        candidates = [t for t in content if t in money_values]
+        unreadable = [t for t in content if t not in money_values
             and re.sub(r"[^a-z0-9]", "", t.text.lower()) not in LABEL_CONTINUATIONS]
         if unreadable:
             issues.append(Issue(code="invalid_amount", field=f"box_{box}",
                 message=f"Box {box} contains unreadable or unexpected content. Verify the image; do not treat it as blank."))
             continue
-        if len(candidates) != 1:
-            if candidates or box in {"1", "2"}:
-                issues.append(Issue(code="ambiguous_amount" if candidates else "missing_amount",
+        if not candidates:
+            if box in {"1", "2"}:
+                issues.append(Issue(code="missing_amount",
                     field=f"box_{box}", message=f"Box {box} has no unique readable amount. Blank does not mean zero."))
+            continue
+        if len(candidates) > 1:
+            issues.append(Issue(code="ambiguous_amount", field=f"box_{box}",
+                message=f"Box {box} has multiple amounts. Verify the image before continuing."))
             continue
         candidate = candidates[0]
         if min(label.confidence, candidate.confidence) < min_confidence:
             issues.append(Issue(code="low_confidence", field=f"box_{box}",
                 message=f"Box {box} is below the OCR confidence threshold. Ask for verification."))
             continue
-        amounts[box] = MoneyFact(value=parse_money(candidate.text),
+        amounts[box] = MoneyFact(value=money_values[candidate],
             source=source(box, [label, candidate]))
 
     return ExtractionResult(document_id=document_id, sha256=sha256,
@@ -194,6 +201,8 @@ def transcribe_tokens(
 def extract_w2(path: str | Path, document_id: str, *, engine: OCREngine | None = None,
                min_confidence: float = .90) -> ExtractionResult:
     """Read real image bytes; never consult expected JSON or a fixture filename."""
+    if not 0 <= min_confidence <= 1:
+        raise ValueError("min_confidence must be between 0 and 1.")
     try:
         raw, image = load_image(path)
     except (OSError, ValueError):
@@ -201,11 +210,7 @@ def extract_w2(path: str | Path, document_id: str, *, engine: OCREngine | None =
         return ExtractionResult(document_id=document_id, status="rejected",
             issues=(Issue(code="invalid_image", message="Use an accessible single PNG, JPEG, or WEBP image under the size limits."),))
     digest = hashlib.sha256(raw).hexdigest()
-    try:
-        reader = engine or RapidOCREngine()
-        tokens = reader.read(image)
-    except Exception:
-        return ExtractionResult(document_id=document_id, sha256=digest, status="needs_review",
-            issues=(Issue(code="ocr_failed", message="Local OCR failed. Retry with a clearer image or request human review."),))
+    reader = RapidOCREngine() if engine is None else engine
+    tokens = reader.read(image)
     return transcribe_tokens(tokens, document_id=document_id, sha256=digest,
         image_size=image.size, engine=reader.name, min_confidence=min_confidence)

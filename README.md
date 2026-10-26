@@ -81,6 +81,13 @@ the output or an error message. Intake must also call the supplied validation
 helper **before storing any user-entered SSN**. OCR cannot guarantee detection of
 every identifier in an unreadable image, so use synthetic documents only.
 
+Input validation lives at `extract_w2`: image checks run once, and each OCR token
+is parsed as money once and reused. Internal code trusts those results. The one
+exception handler converts expected image-input failures to `invalid_image`;
+model initialization and inference errors propagate to the caller. Missing or
+ambiguous document values still produce review issues. No automatic retry or
+fallback model is added.
+
 ## Extraction flow and team integration
 
 ```mermaid

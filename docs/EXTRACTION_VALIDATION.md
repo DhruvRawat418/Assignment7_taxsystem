@@ -1,19 +1,23 @@
 # Extraction validation record
 
-Observed locally on 2026-10-24, macOS ARM64, Python 3.11.5, RapidOCR 1.4.4,
+Observed locally on 2026-10-26, macOS ARM64, Python 3.11.5, RapidOCR 1.4.4,
 ONNX Runtime 1.23.2. Dependencies are pinned in `requirements-lock.txt`.
 
 ## Test suite
 
 Command: `python -m pytest -q`
 
-Latest result after the second review: **77 passed in 60.57 seconds**, run in a
-new isolated environment installed from all 57 packages in the lock file. This
+Latest result after the validation/exception cleanup: **77 passed in 46.78 seconds**,
+run in the isolated environment installed from all 57 packages in the lock file. This
 includes real OCR of image pixels, not only mocked responses. The original 49-test
 suite passed but missed edge cases; 28 regression cases were added during the
 second review. See [findings and fixes](REVIEW_2026-10-24.md). Runtime is one
 observed run, not a performance guarantee. `git diff --check` and Python bytecode
 compilation also passed.
+
+The two technical-failure tests now verify that model initialization and inference
+errors reach the caller. Expected image-input failures still become `invalid_image`
+at the single public boundary; ambiguous document content still requires review.
 
 ## Observed image cases
 

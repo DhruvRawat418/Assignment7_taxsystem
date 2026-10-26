@@ -25,6 +25,11 @@ or perform tax arithmetic. A raw-image SHA-256 and evidence rectangle make accep
 facts inspectable against the actual upload. OCR confidence is an engine score,
 not a guarantee that a monetary value is correct; Review must check the evidence.
 
+The 2026-10-26 cleanup keeps validation at the extraction boundary and removes
+nested exception wrapping. Model errors propagate to the caller. OCR amounts and
+box regions are built once and reused; only shared geometry and fact-construction
+helpers remain. No retries, fallback engines, or speculative checks were added.
+
 ## Requirement coverage
 
 | Requirement | This contribution | Integration still required |
