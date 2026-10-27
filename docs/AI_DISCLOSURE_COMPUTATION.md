@@ -10,3 +10,11 @@ were executed against a real local MCP subprocess and a LangGraph invocation;
 no model API is used by the implemented Computation module. This disclosure
 covers this contribution only. Team members must review the generated code and
 record any further AI use in the final assignment disclosure.
+
+On 2026-10-26, Codex also inspected published teammate branches, compared their
+contracts, and assisted with optional cross-component tests and a team handoff
+guide. The tests use actual Rules, mapping, Computation, Audit, LangGraph and MCP
+code with synthetic Intake/Extraction/adversarial fixtures. A labelled test-only
+projection isolates the known Rules metadata mismatch; a separate direct-contract
+test reports that unresolved mismatch as an expected failure. No teammate agent
+implementation, production supervisor or tax formula was changed in this update.

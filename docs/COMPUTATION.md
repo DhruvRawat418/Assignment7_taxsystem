@@ -5,6 +5,12 @@ not implement the other agents, the global state/graph, UI, PDF renderer, or a
 human approval workflow. This is an independently runnable component for later
 integration, not a finished SilverFile submission.
 
+The active branch is now `xiaolong/computation`. The
+[team integration handoff](COMPUTATION_INTEGRATION.md) documents the published
+Rules and supervisor contracts, the optional cross-agent tests, and an unresolved
+Rules metadata mismatch. The calculation code and existing result contract are
+unchanged by this integration-test update.
+
 ## What was available
 
 At implementation time, `main` and `xiaolong/work` both pointed to initial commit

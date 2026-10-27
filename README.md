@@ -6,6 +6,9 @@ Standalone Computation Agent, deterministic MCP tools, typed integration contrac
 synthetic fixtures, and tests are available on this branch.
 See [docs/COMPUTATION.md](docs/COMPUTATION.md) for scope, input/output fields,
 setup, and integration instructions.
+The active contribution branch is `xiaolong/computation`.
+See [the team handoff and optional cross-agent tests](docs/COMPUTATION_INTEGRATION.md)
+for the published Rules/Extraction/Audit interfaces and the current integration blocker.
 
 ```bash
 python -m pip install -r requirements-computation.txt
