@@ -1,0 +1,6 @@
+# Python 3.11 or 3.12. Builds on the integration environment.
+-r requirements-integration.txt
+langgraph-checkpoint-sqlite>=3.0,<4
+
+# Optional: only for the LLM parser (SILVERFILE_MODEL). Tests and the offline demo don't need it.
+# pip install langchain langchain-openai   # or langchain-anthropic
