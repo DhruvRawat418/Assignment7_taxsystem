@@ -1,22 +1,6 @@
 # Computation team handoff and integration tests
 
-Reviewed 2026-10-26. Active contribution branch: `xiaolong/computation`.
-This update adds opt-in interoperability tests and documentation. The tax math,
-MCP tools, Computation node and input/output models retain their existing behavior.
-
-## Reviewed teammate code
-
-| Component | Source snapshot | Relationship to Computation |
-| --- | --- | --- |
-| Eligibility & Rules (Jijuan) | `jijuan/eligibility`, `1c40122` | Produces the profile, cited clearance and per-box dispositions |
-| Document Extraction (Xinrui) | `Xinrui/work`, `fe70b95` | Produces document facts with original evidence |
-| Integration proposal (Yong) | `yong/integration`, `7a802d4` | Includes unchanged Computation/Audit workers and a W-2 mapping layer |
-| Computation baseline (Xiaolong) | `efdb603`, now `xiaolong/computation` | Supplies deterministic MCP calculations and the existing contract |
-
-The team role list assigns Orchestrator to **Dhruv**. Yong's integration branch
-is a concrete proposal for connecting components; final shared-state, routing and
-metadata decisions should be agreed with Dhruv and the affected component owners.
-These tests do not merge a teammate's branch or make that proposal mandatory.
+Interfaces and commands for connecting Computation to Rules, Extraction and Audit.
 
 ## Input and output responsibilities
 
@@ -50,7 +34,7 @@ amount inputs do not imply that the team already has OCR/mapping for those forms
 
 ## Known direct-connection blocker
 
-At the reviewed snapshots, Rules returns four fields when ready:
+In the tested versions, Rules returns four fields when ready:
 
 ```text
 profile, clearance, box_dispositions, line_12d_boxes
@@ -62,19 +46,16 @@ before Computation runs. Rules' own tests select the three fields before calling
 the adapter; that does not establish direct provider compatibility.
 
 `test_published_rules_packet_directly_matches_adapter` exposes this exact known
-mismatch as an **expected failure**, not a pass. If the published owners remove
-the mismatch, the same test passes; another contract problem fails normally.
+mismatch as an **expected failure**. Once the producer and consumer agree, the
+same test passes; another contract problem fails normally.
 
 The other tests explicitly use a **test-only three-key projection**. They retain
 `line_12d_boxes` separately for inspection and check that it agrees with the
 profile booleans. This proves the downstream arithmetic/Audit connection without
 silently installing a production workaround or creating a Rules clearance.
 
-Suggested owner decision: agree whether `line_12d_boxes` belongs in separate
-dashboard metadata, can be derived from `profile`, or should be accepted as a
-validated optional field by the supervisor. Rules and Dhruv's final supervisor
-must use the same decision. Computation's monetary contract does not need to
-change for this metadata.
+Rules and the integration adapter need to agree where `line_12d_boxes` belongs.
+Computation's monetary contract does not need to change for this metadata.
 
 ## Run the independent module
 
@@ -126,7 +107,7 @@ No real OCR, LLM review, conversation, PDF rendering or filing is claimed.
 
 ### Recorded validation
 
-Against the source snapshots above, the independent Computation suite passed
+In the 2026-10-26 verification, the independent Computation suite passed
 all 62 tests. The optional suite passed 10 tests and reported the one exact
 Rules metadata mismatch as an expected failure. This is a component-compatibility
 result; the unmodified Rules-to-supervisor connection is still blocked.
