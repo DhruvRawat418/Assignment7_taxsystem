@@ -1,4 +1,68 @@
-# SilverFile - Document Extraction (Xinrui/work)
+# Assignment7_taxsystem
+
+## Integration proposal (`yong/integration`)
+
+This branch preserves the existing Extraction (Xinrui), Computation (Xiaolong)
+and deterministic Audit (Yong) histories and adds a **runnable integration
+skeleton**, not the finished six-agent assignment. Original worker source files
+are unchanged. Main and the contributors' branches are not modified.
+
+```bash
+git clone --branch yong/integration https://github.com/DhruvRawat418/Assignment7_taxsystem.git
+cd Assignment7_taxsystem
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-integration.txt
+python run.py --readiness
+python run.py                         # intentionally blocked; exit code 2
+python run.py --synthetic-demo        # actual MCP + Audit; other providers test-only
+python run.py --synthetic-hitl-demo   # actual interrupt/resume, driven by a test
+python -m pytest -q -m 'not ocr'
+```
+
+The supervisor has conditional routes, parallel Extraction workers with a reducer,
+review/revise limits, no-progress detection and guarded human resolution.
+Missing Intake, Rules or adversarial-review providers **block** execution; no
+clearance is invented. A successful demo means only `ready_for_human_review`,
+not an approved, rendered or filed return.
+
+See [integration setup, interfaces and remaining work](docs/INTEGRATION.md) and
+[AI-use disclosure](docs/AI_DISCLOSURE_INTEGRATION.md). The original component
+guides follow below; their standalone limitations still apply. Real OCR on this
+host is blocked by the pinned ONNX runtime's macOS library requirements (see the
+integration guide), not hidden by deleting or weakening tests.
+
+## Yong Cai: Review / Audit component (`yong/audit`)
+
+This branch adds **only the first, deterministic Audit component** for SilverFile.
+It is not the complete multi-agent application, a tax adviser, an LLM adversarial
+reviewer, or permission to file a return. Other agents remain on their owners'
+branches. The independent integration branch also imports Extraction and
+Computation histories without changing their source branches.
+
+Python 3.11+; no dependencies or API keys required for the standalone tests:
+
+```bash
+python -m unittest discover -s tests -v
+python -m demo.run_audit --synthetic-demo
+python -m demo.run_audit --synthetic-demo --tamper
+```
+
+The first demo uses an explicitly labelled **test-only tool double, not MCP**.
+It exits 0 for the synthetic clean packet. The tampered demo exits 1 with
+`revision_required`. Do not use that double to validate real returns.
+
+```bash
+python -m demo.run_audit path/to/audit_packet.json
+```
+
+The packet command has no configured MCP client and intentionally cannot pass.
+Integrate a real client using `make_audit_node(client)` as described in
+[docs/AUDIT.md](docs/AUDIT.md). That document defines input/output fields, source
+bindings, fail-closed status routing, and the remaining integration work.
+
+AI assistance is disclosed in [docs/AI_DISCLOSURE_AUDIT.md](docs/AI_DISCLOSURE_AUDIT.md).
+## Document Extraction component (original Xinrui/work guide)
 
 This branch implements **Document Extraction** component for Assignment 7.
 It reads synthetic W-2 images locally and returns typed records with evidence for
@@ -113,3 +177,18 @@ See [integration contract](docs/DOCUMENT_EXTRACTION.md),
 [second review and fixes](docs/REVIEW_2026-10-24.md),
 [demo 1](demo/eval_case_1.md), [demo 2](demo/eval_case_2.md),
 and [AI-use disclosure](docs/AI_DISCLOSURE.md).
+## Computation Agent contribution
+
+Standalone Computation Agent, deterministic MCP tools, typed integration contract,
+synthetic fixtures, and tests are available on this branch.
+See [docs/COMPUTATION.md](docs/COMPUTATION.md) for scope, input/output fields,
+setup, and integration instructions.
+
+```bash
+python -m pip install -r requirements-computation.txt
+python -m demo.run_computation demo/computation_clean.json
+python -m pytest -c tests/computation/pytest.ini tests/computation -q
+```
+
+This contribution implements only Computation. The other agents, global graph,
+dashboard, PDF export, and complete application remain team integration work.

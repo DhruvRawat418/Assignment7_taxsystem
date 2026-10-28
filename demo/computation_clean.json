@@ -1,0 +1,323 @@
+{
+  "tax_year": 2025,
+  "profile": {
+    "filing_status": "single",
+    "taxpayer_65_or_older": true,
+    "taxpayer_blind": false,
+    "spouse_65_or_older": false,
+    "spouse_blind": false
+  },
+  "rules": {
+    "approved": true,
+    "citations": [
+      "assignment sections 3.2 and 3.3: synthetic approved fixture"
+    ],
+    "blocking_conditions": []
+  },
+  "amounts": {
+    "1z": [
+      {
+        "value": "50000.00",
+        "sources": [
+          {
+            "kind": "document",
+            "reference": "synthetic-w2-1",
+            "field": "box 1"
+          }
+        ]
+      }
+    ],
+    "2a": [
+      {
+        "value": "0.00",
+        "sources": [
+          {
+            "kind": "user_input",
+            "reference": "synthetic-intake-1",
+            "field": "confirmed line 2a",
+            "entered_by": "demo-taxpayer",
+            "recorded_at": "2026-10-24T00:00:00Z"
+          }
+        ]
+      }
+    ],
+    "2b": [
+      {
+        "value": "0.00",
+        "sources": [
+          {
+            "kind": "user_input",
+            "reference": "synthetic-intake-1",
+            "field": "confirmed line 2b",
+            "entered_by": "demo-taxpayer",
+            "recorded_at": "2026-10-24T00:00:00Z"
+          }
+        ]
+      }
+    ],
+    "3a": [
+      {
+        "value": "0.00",
+        "sources": [
+          {
+            "kind": "user_input",
+            "reference": "synthetic-intake-1",
+            "field": "confirmed line 3a",
+            "entered_by": "demo-taxpayer",
+            "recorded_at": "2026-10-24T00:00:00Z"
+          }
+        ]
+      }
+    ],
+    "3b": [
+      {
+        "value": "0.00",
+        "sources": [
+          {
+            "kind": "user_input",
+            "reference": "synthetic-intake-1",
+            "field": "confirmed line 3b",
+            "entered_by": "demo-taxpayer",
+            "recorded_at": "2026-10-24T00:00:00Z"
+          }
+        ]
+      }
+    ],
+    "4a": [
+      {
+        "value": "0.00",
+        "sources": [
+          {
+            "kind": "user_input",
+            "reference": "synthetic-intake-1",
+            "field": "confirmed line 4a",
+            "entered_by": "demo-taxpayer",
+            "recorded_at": "2026-10-24T00:00:00Z"
+          }
+        ]
+      }
+    ],
+    "4b": [
+      {
+        "value": "0.00",
+        "sources": [
+          {
+            "kind": "user_input",
+            "reference": "synthetic-intake-1",
+            "field": "confirmed line 4b",
+            "entered_by": "demo-taxpayer",
+            "recorded_at": "2026-10-24T00:00:00Z"
+          }
+        ]
+      }
+    ],
+    "5a": [
+      {
+        "value": "0.00",
+        "sources": [
+          {
+            "kind": "user_input",
+            "reference": "synthetic-intake-1",
+            "field": "confirmed line 5a",
+            "entered_by": "demo-taxpayer",
+            "recorded_at": "2026-10-24T00:00:00Z"
+          }
+        ]
+      }
+    ],
+    "5b": [
+      {
+        "value": "0.00",
+        "sources": [
+          {
+            "kind": "user_input",
+            "reference": "synthetic-intake-1",
+            "field": "confirmed line 5b",
+            "entered_by": "demo-taxpayer",
+            "recorded_at": "2026-10-24T00:00:00Z"
+          }
+        ]
+      }
+    ],
+    "6a": [
+      {
+        "value": "0.00",
+        "sources": [
+          {
+            "kind": "user_input",
+            "reference": "synthetic-intake-1",
+            "field": "confirmed line 6a",
+            "entered_by": "demo-taxpayer",
+            "recorded_at": "2026-10-24T00:00:00Z"
+          }
+        ]
+      }
+    ],
+    "8": [
+      {
+        "value": "0.00",
+        "sources": [
+          {
+            "kind": "user_input",
+            "reference": "synthetic-intake-1",
+            "field": "confirmed line 8",
+            "entered_by": "demo-taxpayer",
+            "recorded_at": "2026-10-24T00:00:00Z"
+          }
+        ]
+      }
+    ],
+    "10": [
+      {
+        "value": "0.00",
+        "sources": [
+          {
+            "kind": "user_input",
+            "reference": "synthetic-intake-1",
+            "field": "confirmed line 10",
+            "entered_by": "demo-taxpayer",
+            "recorded_at": "2026-10-24T00:00:00Z"
+          }
+        ]
+      }
+    ],
+    "17": [
+      {
+        "value": "0.00",
+        "sources": [
+          {
+            "kind": "user_input",
+            "reference": "synthetic-intake-1",
+            "field": "confirmed line 17",
+            "entered_by": "demo-taxpayer",
+            "recorded_at": "2026-10-24T00:00:00Z"
+          }
+        ]
+      }
+    ],
+    "19": [
+      {
+        "value": "0.00",
+        "sources": [
+          {
+            "kind": "user_input",
+            "reference": "synthetic-intake-1",
+            "field": "confirmed line 19",
+            "entered_by": "demo-taxpayer",
+            "recorded_at": "2026-10-24T00:00:00Z"
+          }
+        ]
+      }
+    ],
+    "20": [
+      {
+        "value": "0.00",
+        "sources": [
+          {
+            "kind": "user_input",
+            "reference": "synthetic-intake-1",
+            "field": "confirmed line 20",
+            "entered_by": "demo-taxpayer",
+            "recorded_at": "2026-10-24T00:00:00Z"
+          }
+        ]
+      }
+    ],
+    "23": [
+      {
+        "value": "0.00",
+        "sources": [
+          {
+            "kind": "user_input",
+            "reference": "synthetic-intake-1",
+            "field": "confirmed line 23",
+            "entered_by": "demo-taxpayer",
+            "recorded_at": "2026-10-24T00:00:00Z"
+          }
+        ]
+      }
+    ],
+    "25a": [
+      {
+        "value": "4000.00",
+        "sources": [
+          {
+            "kind": "document",
+            "reference": "synthetic-w2-1",
+            "field": "box 2"
+          }
+        ]
+      }
+    ],
+    "25b": [
+      {
+        "value": "0.00",
+        "sources": [
+          {
+            "kind": "user_input",
+            "reference": "synthetic-intake-1",
+            "field": "confirmed line 25b",
+            "entered_by": "demo-taxpayer",
+            "recorded_at": "2026-10-24T00:00:00Z"
+          }
+        ]
+      }
+    ],
+    "25c": [
+      {
+        "value": "0.00",
+        "sources": [
+          {
+            "kind": "user_input",
+            "reference": "synthetic-intake-1",
+            "field": "confirmed line 25c",
+            "entered_by": "demo-taxpayer",
+            "recorded_at": "2026-10-24T00:00:00Z"
+          }
+        ]
+      }
+    ],
+    "26": [
+      {
+        "value": "0.00",
+        "sources": [
+          {
+            "kind": "user_input",
+            "reference": "synthetic-intake-1",
+            "field": "confirmed line 26",
+            "entered_by": "demo-taxpayer",
+            "recorded_at": "2026-10-24T00:00:00Z"
+          }
+        ]
+      }
+    ],
+    "32": [
+      {
+        "value": "0.00",
+        "sources": [
+          {
+            "kind": "user_input",
+            "reference": "synthetic-intake-1",
+            "field": "confirmed line 32",
+            "entered_by": "demo-taxpayer",
+            "recorded_at": "2026-10-24T00:00:00Z"
+          }
+        ]
+      }
+    ],
+    "ss_adjustments": [
+      {
+        "value": "0.00",
+        "sources": [
+          {
+            "kind": "user_input",
+            "reference": "synthetic-intake-1",
+            "field": "confirmed line ss_adjustments",
+            "entered_by": "demo-taxpayer",
+            "recorded_at": "2026-10-24T00:00:00Z"
+          }
+        ]
+      }
+    ]
+  }
+}
