@@ -518,10 +518,15 @@ def correction_form(database, case):
     st.rerun()
 
 
+def default_database():
+    root = Path(os.environ["SILVERFILE_DATA_DIR"]).expanduser() if os.getenv("SILVERFILE_DATA_DIR") else Path(__file__).resolve().parent
+    return root / "workflow_sessions.db"
+
+
 def main(database=None):
     st.set_page_config(page_title="SilverFile staff dashboard", page_icon="📋", layout="wide")
     workbench_style()
-    database = database or Path(__file__).resolve().parent / "workflow_sessions.db"
+    database = database or default_database()
     from src.integration.case_ui import start_new_case, workspace, render_intake, model_settings, interview_rows
     with st.sidebar:
         st.markdown('<div class="sf-brand"><span class="sf-brand-mark" aria-hidden="true">S</span><div>SilverFile<small>REVIEW OPERATIONS</small></div></div>', unsafe_allow_html=True)

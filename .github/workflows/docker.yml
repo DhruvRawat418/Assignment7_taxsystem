@@ -1,0 +1,32 @@
+name: Docker offline checks
+
+on:
+  push:
+    branches: [xiaolong/docker, yong/dashboard-security, main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Build the integrated image
+        run: docker compose build
+      - name: Check dependencies
+        run: docker run --rm --network none silverfile:local python -m pip check
+      - name: Run every offline test, including OCR and MCP
+        run: docker run --rm --network none silverfile:local python -m pytest tests -q
+      - name: Check dashboard health
+        run: docker compose up -d --wait --wait-timeout 90
+      - name: Show dashboard logs
+        if: always()
+        run: docker compose logs --tail=100 app
+      - name: Remove this runner's test containers and volume
+        if: always()
+        run: docker compose down --volumes
