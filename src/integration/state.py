@@ -10,6 +10,7 @@ from src.integration.contracts import IntegrationError
 
 
 class CaseState(TypedDict, total=False):
+    task_plan: dict
     case_id: str
     mode: str
     status: str

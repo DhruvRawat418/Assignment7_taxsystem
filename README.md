@@ -1,40 +1,72 @@
-# Assignment7_taxsystem
+# SilverFile — Xinrui/work
 
-## Integration proposal (`yong/integration`)
-
-This branch preserves the existing Extraction (Xinrui), Computation (Xiaolong)
-and deterministic Audit (Yong) histories and adds a **runnable integration
-skeleton**, not the finished six-agent assignment. Original worker source files
-are unchanged. Main and the contributors' branches are not modified.
+Xinrui's contributions are **Document Extraction** and **Task Division &
+Management**. This branch merges Yong's integration history so the allocation
+policy runs inside the actual shared supervisor. Computation, Audit, and the
+original supervisor remain attributed to their authors in Git history.
+Main and the contributors' source branches are unchanged.
 
 ```bash
-git clone --branch yong/integration https://github.com/DhruvRawat418/Assignment7_taxsystem.git
+git clone --branch Xinrui/work https://github.com/DhruvRawat418/Assignment7_taxsystem.git
 cd Assignment7_taxsystem
-python3.12 -m venv .venv
+python3.11 -m venv .venv
 source .venv/bin/activate
-python -m pip install -r requirements-integration.txt
+python -m pip install -r requirements-lock.txt -r requirements-integration.txt
 python run.py --readiness
 python run.py                         # intentionally blocked; exit code 2
-python run.py --synthetic-demo        # actual MCP + Audit; other providers test-only
-python run.py --synthetic-hitl-demo   # actual interrupt/resume, driven by a test
-python -m pytest -q -m 'not ocr'
+python run.py --synthetic-demo --task-plan
+python run.py --synthetic-hitl-demo --task-plan
+python -m pytest -q
 ```
 
-The supervisor has conditional routes, parallel Extraction workers with a reducer,
-review/revise limits, no-progress detection and guarded human resolution.
-Missing Intake, Rules or adversarial-review providers **block** execution; no
-clearance is invented. A successful demo means only `ready_for_human_review`,
-not an approved, rendered or filed return.
+The two demos use actual MCP Computation and Audit; Intake, Rules, Extraction,
+and Adversarial Review are explicitly labelled test providers. The second demo
+resumes a real LangGraph interrupt using a synthetic test-driver response.
+Both expose the current task/dependency board through `--task-plan`.
 
-See [integration setup, interfaces and remaining work](docs/INTEGRATION.md) and
-[AI-use disclosure](docs/AI_DISCLOSURE_INTEGRATION.md). The original component
-guides follow below; their standalone limitations still apply. Real OCR on this
-host is blocked by the pinned ONNX runtime's macOS library requirements (see the
-integration guide), not hidden by deleting or weakening tests.
+```mermaid
+flowchart TD
+    S[Orchestrator: route and check loop bounds] --> I[Intake: facts and active uploads]
+    I --> P[Task policy: allocate only missing uploads]
+    P --> E1[Extraction task: upload A]
+    P --> E2[Extraction task: upload B]
+    E1 --> A[Reducer and aggregation gate]
+    E2 --> A
+    P -->|all uploads already processed or no uploads| A
+    A -->|needs a replacement| I
+    A -->|all active records ready| R[Eligibility and Rules]
+    R -->|cleared| C[Computation: deterministic MCP]
+    C --> U[Independent deterministic Audit]
+    U -->|passed| V[Adversarial Review]
+    U -->|findings: route back through supervisor| S
+    V -->|findings: route back through supervisor| S
+    V -->|no findings and current audit| F[Ready for human review]
+    R -->|escalation| H[Human interrupt]
+    H -->|response to named owner| S
+    S -->|review limit, hop limit, or no progress| B[Blocked with reason]
+```
 
-## Yong Cai: Review / Audit component (`yong/audit`)
+The allocation policy is in [task_division.py](src/integration/task_division.py).
+It shares one plan between fan-out and aggregation, reuses successful uploads,
+and assigns failed uploads to Intake. Only the active inventory affects readiness;
+superseded evidence stays in history. The supervisor retains final routing,
+review bounds, no-progress detection, and human-response checks.
 
-This branch adds **only the first, deterministic Audit component** for SilverFile.
+**Current boundary:** the Task Division component is implemented and tested.
+Direct real-provider integration stops at the Rules metadata contract mismatch;
+the adversarial provider and finished UI/form are still needed. A successful demo
+means `ready_for_human_review`, not a rendered or filed return.
+
+See [Task Division implementation, verification and exact blockers](docs/TASK_DIVISION.md),
+[integration contracts](docs/INTEGRATION.md), and
+[Xinrui's AI-use disclosure](docs/AI_DISCLOSURE.md).
+On 2026-10-27 this macOS 26.3.1 host passed the full suite including real OCR.
+The macOS 13 ONNX issue in Yong's integration guide is that host's historical
+result, not the outcome of this branch's latest verification.
+
+## Imported Yong Cai Review / Audit component (`yong/audit`)
+
+Yong's original component provides the deterministic Audit checks for SilverFile.
 It is not the complete multi-agent application, a tax adviser, an LLM adversarial
 reviewer, or permission to file a return. Other agents remain on their owners'
 branches. The independent integration branch also imports Extraction and
@@ -79,7 +111,7 @@ git clone --branch Xinrui/work https://github.com/DhruvRawat418/Assignment7_taxs
 cd Assignment7_taxsystem
 python3.11 -m venv .venv
 source .venv/bin/activate
-python -m pip install -r requirements-lock.txt
+python -m pip install -r requirements-lock.txt -r requirements-integration.txt
 
 # Real OCR of a JPEG image, no API key or hosted model required.
 python extract_documents.py demo/w2_clean.jpg --output outputs/clean.json
@@ -167,9 +199,9 @@ flowchart TD
     H -->|new upload ID| S
 ```
 
-This diagram covers the extraction part only. The complete supervisor graph must
-still implement the team's six-agent orchestration, independent review/revise
-cycle, no-progress handoff guard, dashboard, and tax return generation.
+This second diagram covers extraction only. The shared supervisor now supplies
+review/revise limits and a no-progress guard; real-provider integration, the
+dashboard, and tax return rendering still require team work as listed above.
 
 See [integration contract](docs/DOCUMENT_EXTRACTION.md),
 [implementation notes](docs/IMPLEMENTATION_NOTES.md),

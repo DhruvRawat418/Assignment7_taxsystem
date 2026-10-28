@@ -29,6 +29,8 @@ async def execute(args):
     else:
         state = await build_graph().ainvoke(initial, {"configurable": {"thread_id": args.case_id}})
         output = summary(state)
+    if args.task_plan:
+        output["task_plan"] = state["task_plan"]
     return output, 0 if state["status"] == "ready_for_human_review" else 2
 
 
@@ -39,6 +41,7 @@ def main():
     group.add_argument("--synthetic-demo", action="store_true")
     group.add_argument("--synthetic-hitl-demo", action="store_true")
     parser.add_argument("--case-id", default="integration-demo")
+    parser.add_argument("--task-plan", action="store_true", help="Include the current task/dependency board")
     args = parser.parse_args()
     try:
         output, code = asyncio.run(execute(args))

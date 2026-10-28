@@ -12,6 +12,7 @@ from src.document_extraction.models import ExtractionResult
 from src.integration.adapters import prepare_packet, validate_intake, validate_payload
 from src.integration.contracts import IntegrationError, ProviderResult
 from src.integration.runtime import default_runtime
+from src.integration.task_division import plan_extraction, task_board
 from src.integration.state import (
     CaseState, active_extractions, context_fingerprint, digest, invalidate, progress_fingerprint,
     semantic_digest,
@@ -91,20 +92,24 @@ def build_graph(providers=None, checkpointer=None, *, max_review_attempts=3, max
 
     def supervisor(state):
         if state.get("status") != "running":
-            return {}
+            return {"task_plan": task_board(state)}
         stage = state.get("next_stage")
+        stop = None
         if stage not in STAGES:
-            return _blocked("invalid_stage")
-        if state.get("hops", 0) >= max_hops:
-            return _blocked("hop_limit")
-        if stage == "audit" and state.get("review_attempts", 0) >= max_review_attempts:
-            return _blocked("review_limit")
-        signature = progress_fingerprint(state)
-        seen = dict(state.get("seen_progress", {}))
-        seen[signature] = seen.get(signature, 0) + 1
-        if seen[signature] > no_progress_limit:
-            return _blocked("no_progress")
-        return dict(hops=state.get("hops", 0) + 1, seen_progress=seen, mode=p.mode,
+            stop = _blocked("invalid_stage")
+        elif state.get("hops", 0) >= max_hops:
+            stop = _blocked("hop_limit")
+        elif stage == "audit" and state.get("review_attempts", 0) >= max_review_attempts:
+            stop = _blocked("review_limit")
+        else:
+            signature = progress_fingerprint(state)
+            seen = dict(state.get("seen_progress", {}))
+            seen[signature] = seen.get(signature, 0) + 1
+            if seen[signature] > no_progress_limit:
+                stop = _blocked("no_progress")
+        if stop:
+            return {**stop, "task_plan": task_board({**state, **stop})}
+        return dict(task_plan=task_board(state), hops=state.get("hops", 0) + 1, seen_progress=seen, mode=p.mode,
                     events=[*state.get("events", []), {"stage": stage}])
 
     async def intake(state):
@@ -147,10 +152,10 @@ def build_graph(providers=None, checkpointer=None, *, max_review_attempts=3, max
                 issues=[dict(code="extraction_failed", message="Extraction could not complete.")])}}
 
     def aggregate(state):
-        results = active_extractions(state)
-        if set(results) != {d["document_id"] for d in state["documents"]}:
+        plan = plan_extraction(state["documents"], state["extractions"])
+        if plan.pending:
             return _blocked("incomplete_extraction", "intake")
-        if any(item.get("status") != "extracted" or item.get("issues") for item in results.values()):
+        if plan.needs_input:
             return dict(next_stage="intake", issues=[_issue("document_requires_attention", "intake")])
         return dict(next_stage="rules")
 
@@ -273,8 +278,8 @@ def build_graph(providers=None, checkpointer=None, *, max_review_attempts=3, max
         if state.get("status") != "running":
             return END
         if state["next_stage"] == "extract":
-            pending = [d for d in state["documents"] if d["document_id"] not in state.get("extractions", {})]
-            return [Send("extract_document", {"document": deepcopy(d)}) for d in pending] or "aggregate"
+            plan = plan_extraction(state["documents"], state["extractions"])
+            return [Send("extract_document", {"document": document}) for document in plan.pending] or "aggregate"
         return state["next_stage"]
 
     builder = StateGraph(CaseState)

@@ -35,7 +35,7 @@ def test_readiness_is_configuration_not_a_claim_all_components_work():
 
 @pytest.mark.parametrize("flag", ["--synthetic-demo", "--synthetic-hitl-demo"])
 def test_labelled_demo_really_uses_mcp_and_audit_without_claiming_real_agents(flag):
-    result, data = run(flag)
+    result, data = run(flag, "--task-plan")
     assert result.returncode == 0, data
     assert data["status"] == "ready_for_human_review"
     assert data["mode"] == "synthetic"
@@ -48,6 +48,9 @@ def test_labelled_demo_really_uses_mcp_and_audit_without_claiming_real_agents(fl
     assert data["human_interrupt_resumed"] is (flag == "--synthetic-hitl-demo")
     assert data["production_ready"] is False
     assert "refund" not in data and "filled_form" not in data
+    assert data["task_plan"]["case_status"] == "ready_for_human_review"
+    assert data["task_plan"]["tasks"][-1]["task_id"] == "final_review"
+    assert "demo/w2_clean.jpg" not in json.dumps(data["task_plan"])
 
 
 def test_invalid_case_id_has_a_sanitized_error_not_a_traceback():
