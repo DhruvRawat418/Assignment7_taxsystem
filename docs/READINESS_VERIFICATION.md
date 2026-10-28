@@ -13,8 +13,11 @@ One independent final review found no Critical/Important issues. Its minor stale
 comments were reconciled as documentation only. A final container-context check
 found that .dockerignore/compose.yaml also need copying for the packaged static
 checks; a failing assertion reproduced that omission, then the allowlist was
-fixed and verified. The extended image still needs a CI/Docker build; there is
-no Docker engine on this machine.
+fixed and verified. The extended runtime at commit `6fe6c58` then passed GitHub's Linux Docker image
+build, dependency check, offline suite and dashboard health check in 2m44s:
+https://github.com/DhruvRawat418/Assignment7_taxsystem/actions/runs/40782142415.
+There is no local Docker engine on this macOS machine; this is actual remote
+container verification, not a claim of a local build.
 
 Local tokenizer measurement was actually run, zero API calls: disabled history
 28,941→287,673 message-content tokens; selective recall28,941→28,963. Raw results

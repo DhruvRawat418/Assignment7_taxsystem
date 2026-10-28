@@ -39,7 +39,7 @@ This is a readiness record, not a declaration that the assignment is complete.
 - Five-page report (10): report owner must finish design/diagram/agents/limits/roles.
   No final report artifact was present in this checkout during this check.
 - Docker (5): base Linux build evidence is in docs/DOCKER.md, credited to Xiaolong.
-  This browser-extended image needs a new CI build. Local Docker is unavailable.
+  Browser-extended runtime commit6fe6c58 passed Linux Docker CI run40782142415 (build/dependencies/offline tests/health). Rebuild after later merges; local Docker is unavailable.
 
 ## Security boundaries and remaining limitations
 

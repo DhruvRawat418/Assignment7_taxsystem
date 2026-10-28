@@ -7,9 +7,12 @@ subdirectory of the named volume), and feature-branch CI. CLI database symlinks
 still point at the same volume. Upload paths remain inside the validated root;
 no upload symlink exception was added. Do not put keys in image/build arguments.
 
-The upstream Linux validation below applies to Xiaolong's original snapshot,
-not this extended image. This macOS workstation has no Docker engine; the merged
-image needs a fresh CI/container build and both full browser demos before release.
+The upstream Linux validation below applies to Xiaolong's original snapshot.
+The browser-extended runtime at commit `6fe6c58` subsequently passed the complete
+Linux GitHub Actions build, dependency check, offline tests and dashboard health:
+[Docker CI run 40782142415](https://github.com/DhruvRawat418/Assignment7_taxsystem/actions/runs/40782142415).
+This macOS workstation has no local Docker engine. The team should rebuild after
+any later runtime merge and still perform both live-key demos before release.
 Use `yong/dashboard-security` when cloning the browser extension. After starting,
 click **New case**; the old CLI creation instructions below are optional.
 
