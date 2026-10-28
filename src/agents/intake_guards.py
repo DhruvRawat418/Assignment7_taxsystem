@@ -48,6 +48,18 @@ def scan_ssns(text: str) -> SSNScan:
     return scan
 
 
+def validate_staff_metadata(staff, reason):
+    """Staff notes must not bypass the taxpayer-identifier checkpoint boundary."""
+    if (not isinstance(staff,str) or not staff.strip() or len(staff)>80
+            or not isinstance(reason,str) or not reason.strip() or len(reason)>500):
+        raise ValueError('Record a staff name (up to 80 characters) and a reason (up to 500 characters).')
+    for value in (staff,reason):
+        scanned=scan_ssns(value)
+        if scanned.real_ssn_found or scanned.test_ssns:
+            raise ValueError('Do not include Social Security numbers in staff names or review notes.')
+    return staff.strip(),reason.strip()
+
+
 def mask_ssn(ssn: str) -> str:
     return "***-**-" + ssn[-4:]
 

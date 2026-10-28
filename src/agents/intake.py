@@ -472,6 +472,14 @@ def make_intake_node(parser: Parser):
             "question": QUESTIONS[field],
             "covered_so_far": summarize(state),
         })
+        if field == 'w2_files' and isinstance(reply,dict) and set(reply)=={'uploaded_w2_paths'}:
+            paths=reply['uploaded_w2_paths']
+            if (not isinstance(paths,list) or not 1<=len(paths)<=10
+                    or any(not isinstance(p,str) or not p or len(p)>1000 for p in paths)):
+                raise ValueError('Invalid uploaded document references')
+            # The browser service validates image bytes and generates these paths.
+            # Filesystem references are not free-text taxpayer answers or SSNs.
+            return _store(state,field,paths,'Browser W-2 upload',state.get('respondent','taxpayer'))
         return handle_reply(state, field, str(reply), parser)
 
     return intake_node

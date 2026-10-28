@@ -20,3 +20,13 @@ For the subsequent GUI refinement, Codex also prepared the local CSS asset,
 sidebar theme, escaped case/status presentation and two injection regression
 tests, then inspected fresh desktop and narrow-screen browser renders. Existing
 case actions and backend workflows remain credited to their original authors.
+
+For the browser lifecycle update, Codex assisted with the persistent case-service
+adapter, create/resume/interview/upload/check GUI, session-only credential binding,
+typed upload handoff, stale-input and identifier safeguards, automated lifecycle
+tests and documentation. A separate agent investigated native OCR compatibility
+in an isolated environment and another reviewed the new lifecycle code. The
+original Intake questions/rules, computation tools and exporter remain teammate
+work; narrowly required Intake input-boundary changes are included and attributed
+in this update. End-to-end tests use actual synthetic-image OCR and MCP but a
+mocked external reviewer. No live model request or tax filing was performed.

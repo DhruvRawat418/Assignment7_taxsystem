@@ -1,5 +1,10 @@
 # Staff dashboard workbench — Yong Cai's update
 
+The subsequent [browser lifecycle update](BROWSER_WORKFLOW.md) adds New case,
+saved interviews, uploads and check/retry controls. Its full suite passes305tests
+on the documented macOS13 OCR profile, including the eight failures recorded
+in the historical verification below. It also adds session-only model settings.
+
 Based on Dhruv's integrated app at `5be650b`, on local branch
 `yong/dashboard-security`. This change improves the staff interface while
 preserving his calculation, correction, stop, saved-state and PDF-export code.
@@ -43,7 +48,7 @@ container works. The packaging owner should:
   modules, `assets/dashboard.css`, the pinned PDF template and all
   `requirements-team.txt` dependencies.
 - Keep `.env`, secrets, local virtual environments, `.git`, generated downloads
-  and interview/workflow databases out of the image build context.
+  and interview/workflow databases and the local `uploads/` folder out of the image build context.
 - Make the two SQLite database locations writable and persistent. Current
   interview/workflow code uses project-root paths; coordinate any location change
   instead of mounting a volume that the application never reads.

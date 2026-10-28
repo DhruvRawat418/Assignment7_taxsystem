@@ -1,5 +1,10 @@
 # SilverFile: teammate setup and demo guide
 
+**Complete browser workflow:** click **New case** to conduct the saved interview,
+upload a synthetic W-2, configure the session's model key and run checks without
+a terminal handoff. See [browser workflow and local OCR setup](docs/BROWSER_WORKFLOW.md).
+The earlier CLI instructions below remain available for existing workflows.
+
 The `yong/dashboard-security` update adds the staff workbench: search/status
 filters, direct attention links, and review/evidence/history tabs. Read the
 [dashboard guide and Docker handoff](docs/DASHBOARD_WORKBENCH.md) and

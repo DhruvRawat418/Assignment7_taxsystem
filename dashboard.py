@@ -30,8 +30,12 @@ STATUS_LABELS = {
     "running": "In progress",
     "ready_for_human_review": "Draft ready",
     "stopped": "Stopped",
+    "interview_in_progress": "Interview in progress",
+    "intake_needs_review": "Interview needs review",
+    "ready_for_checks": "Ready for checks",
+    "intake_stopped": "Interview stopped",
 }
-ATTENTION_STATUSES = {"paused_for_human_review", "needs_input", "blocked"}
+ATTENTION_STATUSES = {"paused_for_human_review", "needs_input", "blocked", "intake_needs_review", "ready_for_checks", "interview_in_progress"}
 STAGE_LABELS = {
     "intake": "Intake", "extract": "Document extraction", "rules": "Eligibility & rules",
     "compute": "Calculation", "audit": "Calculation audit", "adversarial": "Independent review",
@@ -68,6 +72,7 @@ def filter_cases(cases, query="", status="All statuses"):
 
 def choose_case(case_id):
     st.session_state["open_case_id"] = case_id
+    st.session_state['_screen'] = 'workspace'
 
 
 def case_identity_html(case_id):
@@ -107,6 +112,11 @@ def show_attention_queue(cases):
                     "A staff decision is needed." if case["pending_reviews"] else "Inspect the case for the next step."))
                 revision, action = st.columns([1, 2], vertical_alignment="center")
                 revision.caption(f"Revision {case['revision']}")
+                from src.integration.case_ui import INTAKE_STATUSES, open_interview
+                if case['status'] in INTAKE_STATUSES:
+                    action.button(f"Continue {case['case_id']}", key="attention_"+case['case_id'],
+                                  on_click=open_interview,args=(case['case_id'],),width='stretch',type='primary')
+                    continue
                 label = "Review" if case["status"] == "paused_for_human_review" else "Inspect"
                 action.button(f"{label} {case['case_id']}", key="attention_" + case["case_id"],
                               on_click=choose_case, args=(case["case_id"],), width="stretch",
@@ -114,7 +124,12 @@ def show_attention_queue(cases):
 
 
 def show_review_panel(database, case):
+    from src.integration.case_ui import INTAKE_STATUSES, open_interview, _finish_run
     status = case["status"]
+    if status in INTAKE_STATUSES:
+        st.info('Open the saved interview to continue answering or start its automated checks.')
+        st.button(f"Continue interview {case['case_id']}", on_click=open_interview,args=(case['case_id'],),type='primary')
+        return
     if status == "paused_for_human_review":
         st.warning("Checks are paused for a staff decision. Review the saved facts before making a change.")
         st.caption("Correct only confirmed input mistakes. If the reported facts are accurate and unsupported, stop the case.")
@@ -134,6 +149,12 @@ def show_review_panel(database, case):
         for issue in case["issues"]:
             label = ISSUE_LABELS.get(issue.get("code"), issue.get("code", "Review required").replace("_", " ").capitalize())
             st.text("• " + label)
+    if status == 'needs_input' and any(i.get('code')=='document_requires_attention' for i in case['issues']):
+        st.button('Replace W-2 documents',on_click=open_interview,args=(case['case_id'],True),type='primary')
+    if status == 'blocked' and case['issues']==[{'code':'provider_failed','owner':'adversarial'}]:
+        st.caption('After correcting Model settings, you can retry this saved review without repeating the interview.')
+        if st.button('Retry AI review',type='primary'):
+            _finish_run(database.parent,case['case_id'])
     correction_form(database, case)
     stop_form(database, case)
     if case["issues"] or case["pending_reviews"]:
@@ -283,7 +304,7 @@ def show_pdf_export(database, case):
             with st.spinner("Checking the saved reviews and filling the form…"):
                 pdf, evidence, notes = export_saved_case(
                     database, case["case_id"], case["revision"],
-                    database.parent / "assets" / "f1040s--2025.pdf")
+                    Path(__file__).resolve().parent / "assets" / "f1040s--2025.pdf")
             st.session_state["pdf_export"] = dict(token=token, pdf=pdf, evidence=evidence, notes=notes)
         except ImportError:
             st.error("Install the PDF dependencies from requirements-pdf.txt, then restart the dashboard.")
@@ -376,13 +397,13 @@ def submit_correction(database, case, field, new_value, staff, reason):
     from src.agents.openai_transport import openai_review_call
     from src.integration.contracts import Providers
 
-    if not os.getenv("OPENAI_API_KEY"):
-        raise ValueError("The dashboard needs OPENAI_API_KEY. Restart it from the terminal where your key is available.")
+    from src.integration.case_ui import model_call_for_session
+    model_call = model_call_for_session()
     fresh = next((c for c in load_cases(database) if c["case_id"] == case["case_id"]), None)
     if fresh != case:
         raise ValueError("This case changed. Refresh and review it before submitting again.")
     workers = Providers(rules=make_eligibility_node(),
-                        adversarial=make_adversarial_provider(openai_review_call))
+                        adversarial=make_adversarial_provider(model_call))
     return asyncio.run(resolve_scope(database.parent, case["case_id"], field,
                       case["scope_answers"][field], new_value, staff, reason, workers))
 
@@ -500,17 +521,25 @@ def correction_form(database, case):
 def main(database=None):
     st.set_page_config(page_title="SilverFile staff dashboard", page_icon="📋", layout="wide")
     workbench_style()
+    database = database or Path(__file__).resolve().parent / "workflow_sessions.db"
+    from src.integration.case_ui import start_new_case, workspace, render_intake, model_settings, interview_rows
     with st.sidebar:
         st.markdown('<div class="sf-brand"><span class="sf-brand-mark" aria-hidden="true">S</span><div>SilverFile<small>REVIEW OPERATIONS</small></div></div>', unsafe_allow_html=True)
-        st.markdown('<div class="sf-sidebar-section">CASE MANAGEMENT</div><div class="sf-sidebar-active"><span aria-hidden="true">▦</span> Case workspace</div>', unsafe_allow_html=True)
+        st.markdown('<div class="sf-sidebar-section">CASE MANAGEMENT</div>', unsafe_allow_html=True)
+        st.button('New case',type='primary',on_click=start_new_case,width='stretch',key='new_case')
+        st.button('Case workspace',on_click=workspace,width='stretch')
         st.divider()
         st.markdown('<div class="sf-sidebar-section">FIND A CASE</div>', unsafe_allow_html=True)
         query = st.text_input("Search cases", placeholder="Case ID or issue")
         selected_status = st.selectbox("Status filter", ["All statuses", *STATUS_LABELS.values()])
         st.button("Refresh cases", width="stretch")
+        model_settings()
         st.divider()
         st.markdown('<div class="sf-sidebar-foot"><span aria-hidden="true">●</span> Local workspace<small>Tax year 2025 · Draft preparation</small></div>', unsafe_allow_html=True)
         st.caption("Local, single-operator workspace. Drafts require staff review before use.")
+    if st.session_state.get('_screen') == 'intake':
+        render_intake(database.parent)
+        return
     st.markdown('<div class="sf-topline"><span>OPERATIONS <span aria-hidden="true">/</span> CASE MANAGEMENT</span><span class="sf-year">2025 TAX YEAR</span></div>', unsafe_allow_html=True)
     st.title("Case workspace")
     st.caption("A clear view of every case. Review requests, verify evidence, and prepare the next draft.")
@@ -523,9 +552,9 @@ def main(database=None):
         else:
             st.warning(f"{case_id}: {result['status']}. Review the result below before taking another action.")
             st.json(result)
-    database = database or Path(__file__).resolve().parent / "workflow_sessions.db"
     try:
         cases = load_cases(database)
+        cases += interview_rows(database.parent,cases)
     except Exception:
         st.error("Could not read the saved workflows. Check that this file is in silverfile-app and the workflow database is available.")
         st.stop()

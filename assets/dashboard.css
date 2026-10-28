@@ -104,6 +104,12 @@
     margin-top: .4rem;
 }
 [data-testid="stSidebar"] [data-testid="stButton"] button:hover {border-color: #82d6c3; color: #b4eddf;}
+[data-testid="stSidebar"] .st-key-new_case button {
+    background: #12796e;
+    border-color: #238c80;
+    color: #fff;
+}
+[data-testid="stSidebar"] .st-key-new_case button:hover {background: #168679; color: #fff;}
 .sf-sidebar-foot {color: #e8f2f6; font-size: .8rem; margin-bottom: .9rem;}
 .sf-sidebar-foot > span {color: #7edbc5; font-size: .6rem; margin-right: .45rem;}
 .sf-sidebar-foot small {display: block; margin-top: .4rem; color: #a9bbcc; font-size: .7rem;}

@@ -28,3 +28,4 @@ outputs/
 .streamlit/secrets.toml
 .coverage
 htmlcov/
+/uploads/

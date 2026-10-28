@@ -3,6 +3,7 @@
 from copy import deepcopy
 
 from src.agents.intake import SCOPE_FIELDS, provenance
+from src.agents.intake_guards import validate_staff_metadata
 
 
 def prepare_scope_correction(
@@ -29,6 +30,7 @@ def prepare_scope_correction(
 
     if len(staff) > 80 or len(reason) > 500:
         raise ValueError("Staff name or correction reason is too long.")
+    staff, reason = validate_staff_metadata(staff, reason)
 
     old = session.get("answers", {}).get(field)
 
