@@ -22,6 +22,127 @@ FIELDS = {
     "needs_state_return": "Needs a state return",
 }
 
+STATUS_LABELS = {
+    "paused_for_human_review": "Needs staff review",
+    "needs_input": "Needs information",
+    "blocked": "Blocked",
+    "running": "In progress",
+    "ready_for_human_review": "Draft ready",
+    "stopped": "Stopped",
+}
+ATTENTION_STATUSES = {"paused_for_human_review", "needs_input", "blocked"}
+STAGE_LABELS = {
+    "intake": "Intake", "extract": "Document extraction", "rules": "Eligibility & rules",
+    "compute": "Calculation", "audit": "Calculation audit", "adversarial": "Independent review",
+    "human": "Staff review", "complete": "Draft prepared",
+}
+ISSUE_LABELS = {
+    "itemized_deductions_out_of_scope": "Itemized deductions need review",
+    "rental_income_out_of_scope": "Rental income is outside the supported scope",
+    "self_employment_income_out_of_scope": "Business or freelance income needs review",
+    "capital_gains_out_of_scope": "Investment or property sales need review",
+    "foreign_income_out_of_scope": "Foreign income or accounts need review",
+    "state_return_out_of_scope": "A state return was requested",
+    "document_requires_attention": "A document needs clearer or corrected information",
+    "provider_failed": "A workflow service could not finish",
+    "provider_not_configured": "A required workflow service is not configured",
+    "no_progress": "The workflow stopped after repeated unchanged results",
+}
+
+
+def status_label(status):
+    return STATUS_LABELS.get(status, "Unknown")
+
+
+def filter_cases(cases, query="", status="All statuses"):
+    """Presentation-only filtering; original cases remain authoritative for actions."""
+    query = query.strip().casefold()
+    return [case for case in cases
+            if (status == "All statuses" or status_label(case["status"]) == status)
+            and (not query or query in case["case_id"].casefold()
+                 or any(query in issue.get("code", "").casefold()
+                        or query in ISSUE_LABELS.get(issue.get("code"), "").casefold()
+                        for issue in case.get("issues", [])))]
+
+
+def choose_case(case_id):
+    st.session_state["open_case_id"] = case_id
+
+
+def workbench_style():
+    # Static local CSS only: no case data, remote fonts or script injection.
+    st.markdown("""<style>
+        .stMainBlockContainer {max-width: 1440px; padding-top: 2.25rem; padding-bottom: 3rem;}
+        h1 {letter-spacing: -0.045em; font-weight: 750 !important;}
+        h2, h3 {letter-spacing: -0.02em;}
+        [data-testid="stMetric"] {background: #fff; border: 1px solid #dce5e8;
+            border-radius: 12px; padding: 1rem 1.2rem;}
+        [data-testid="stMetricValue"] {font-variant-numeric: tabular-nums;}
+        [data-testid="stSidebar"] {border-right: 1px solid #dce5e8;}
+        [data-testid="stVerticalBlockBorderWrapper"] {border-radius: 12px;}
+        button {font-weight: 550 !important;}
+    </style>""", unsafe_allow_html=True)
+
+
+def show_attention_queue(cases):
+    attention = [case for case in cases if case["status"] in ATTENTION_STATUSES]
+    if not attention:
+        return
+    st.subheader("Needs attention")
+    st.caption("Open a case to inspect the request and take the next available action.")
+    for case in sorted(attention, key=lambda c: (c["status"] != "paused_for_human_review", c["case_id"])):
+        with st.container(border=True):
+            description, state_column, action = st.columns([5, 2, 2], vertical_alignment="center")
+            description.write(case["case_id"])
+            issue = next(iter(case.get("issues", [])), {})
+            description.caption(ISSUE_LABELS.get(issue.get("code"),
+                "A staff decision is needed." if case["pending_reviews"] else "Inspect the case for the next step."))
+            state_column.write(status_label(case["status"]))
+            state_column.caption(f"Revision {case['revision']}")
+            label = "Review" if case["status"] == "paused_for_human_review" else "Inspect"
+            action.button(f"{label} {case['case_id']}", key="attention_" + case["case_id"],
+                          on_click=choose_case, args=(case["case_id"],), width="stretch",
+                          type="primary" if label == "Review" else "secondary")
+
+
+def show_review_panel(database, case):
+    status = case["status"]
+    if status == "paused_for_human_review":
+        st.warning("Checks are paused for a staff decision. Review the saved facts before making a change.")
+        st.caption("Correct only confirmed input mistakes. If the reported facts are accurate and unsupported, stop the case.")
+    elif status == "ready_for_human_review":
+        st.success("Automated checks have finished. The draft is ready for staff review.")
+        st.caption("Open Draft & evidence to inspect the amounts and download the draft. Nothing has been filed.")
+    elif status == "needs_input":
+        st.info("Additional information is needed. Update the taxpayer interview or replace the affected document before continuing.")
+    elif status == "blocked":
+        st.error("The workflow could not continue. Review the issue before requesting another run.")
+    elif status == "stopped":
+        st.info("This case is stopped. Its recorded issues and history are retained.")
+    else:
+        st.info("This case is still in progress. Refresh to load the latest saved state.")
+    if case["issues"]:
+        st.write("Items to review")
+        for issue in case["issues"]:
+            label = ISSUE_LABELS.get(issue.get("code"), issue.get("code", "Review required").replace("_", " ").capitalize())
+            st.text("• " + label)
+    correction_form(database, case)
+    stop_form(database, case)
+    if case["issues"] or case["pending_reviews"]:
+        with st.expander("Technical review details"):
+            st.json({"issues": case["issues"], "pending_reviews": case["pending_reviews"]})
+
+
+def show_history(database, case):
+    st.subheader("Workflow history")
+    st.caption("Recorded visits show the handoffs, including repeated checks after a correction. A visit does not mean that step passed.")
+    if case["stages"]:
+        st.dataframe([{"Visit": i + 1, "Stage": STAGE_LABELS.get(stage, stage.replace("_", " ").title())}
+                      for i, stage in enumerate(case["stages"])], hide_index=True, width="stretch")
+    else:
+        st.info("No workflow steps have been recorded yet.")
+    show_correction_history(database, case["case_id"])
+
 
 def load_cases(database):
     """Read a consistent snapshot; never invoke agents or update checkpoints."""
@@ -370,8 +491,18 @@ def correction_form(database, case):
 
 def main(database=None):
     st.set_page_config(page_title="SilverFile staff dashboard", page_icon="📋", layout="wide")
-    st.title("SilverFile staff dashboard")
-    st.caption("Saved workflow cases • Local staff demo • One operator at a time")
+    workbench_style()
+    with st.sidebar:
+        st.title("SilverFile")
+        st.caption("STAFF WORKSPACE · TAX YEAR 2025")
+        st.divider()
+        query = st.text_input("Search cases", placeholder="Case ID or issue")
+        selected_status = st.selectbox("Status filter", ["All statuses", *STATUS_LABELS.values()])
+        st.button("Refresh cases", width="stretch")
+        st.divider()
+        st.caption("Local, single-operator workspace. Drafts require staff review before use.")
+    st.title("Case workspace")
+    st.caption("Find a case, resolve a review request, and inspect the evidence behind each draft.")
     if "action_result" in st.session_state:
         case_id, result = st.session_state.pop("action_result")
         if result["status"] == "ready_for_human_review":
@@ -381,7 +512,6 @@ def main(database=None):
         else:
             st.warning(f"{case_id}: {result['status']}. Review the result below before taking another action.")
             st.json(result)
-    st.button("Refresh cases")
     database = database or Path(__file__).resolve().parent / "workflow_sessions.db"
     try:
         cases = load_cases(database)
@@ -391,36 +521,42 @@ def main(database=None):
     if not cases:
         st.info("No saved workflow cases yet. Run an intake handoff, then refresh this page.")
         return
-    columns = st.columns(3)
+    columns = st.columns(4)
     columns[0].metric("Saved cases", len(cases))
-    columns[1].metric("Paused for review", sum(c["status"] == "paused_for_human_review" for c in cases))
-    columns[2].metric("Ready for review", sum(c["status"] == "ready_for_human_review" for c in cases))
+    columns[1].metric("Needs attention", sum(c["status"] in ATTENTION_STATUSES for c in cases))
+    columns[2].metric("Drafts ready", sum(c["status"] == "ready_for_human_review" for c in cases))
+    columns[3].metric("In progress", sum(c["status"] == "running" for c in cases))
+    st.write("")
+    visible = filter_cases(cases, query, selected_status)
+    if not visible:
+        st.info("No cases match these filters. Change the search or status to see more cases.")
+        return
+    show_attention_queue(visible)
+    st.subheader("Case register")
+    st.caption(f"Showing {len(visible)} of {len(cases)} saved cases. Draft ready means prepared for staff review; it does not mean filed.")
     st.dataframe([{
-        "Case": c["case_id"], "Status": c["status"], "Revision": c["revision"],
-        "Issues": ", ".join(issue.get("code", "unknown") for issue in c["issues"]),
-    } for c in cases], hide_index=True, width="stretch")
-    selected = st.selectbox("Open a case", [c["case_id"] for c in cases])
-    case = next(c for c in cases if c["case_id"] == selected)
-    st.subheader("Case details")
-    st.write("Status:", case["status"])
-    st.write("Revision:", case["revision"])
-    if case["status"] == "ready_for_human_review":
-        st.info("Automated checks have finished. A staff member still needs to review the return.")
-    if case["issues"]:
-        st.write("Issues")
-        st.dataframe(case["issues"], hide_index=True, width="stretch")
-    else:
-        st.write("No current issues.")
-    if case["pending_reviews"]:
-        st.write("Pending review requests")
-        st.json(case["pending_reviews"])
-    st.write("Recorded stages")
-    st.text(" → ".join(case["stages"]) or "No stages recorded.")
-    show_return(case)
-    show_pdf_export(database, case)
-    show_correction_history(database, case["case_id"])
-    correction_form(database, case)
-    stop_form(database, case)
+        "Case": c["case_id"], "Status": status_label(c["status"]), "Revision": c["revision"],
+        "Review items": len(c["issues"]),
+    } for c in visible], hide_index=True, width="stretch")
+    ids = [c["case_id"] for c in visible]
+    if st.session_state.get("open_case_id") not in ids:
+        st.session_state["open_case_id"] = next((c["case_id"] for c in visible
+            if c["status"] == "paused_for_human_review"), ids[0])
+    selected = st.selectbox("Open a case", ids, key="open_case_id")
+    case = next(c for c in visible if c["case_id"] == selected)
+    st.divider()
+    heading, badge = st.columns([4, 2], vertical_alignment="center")
+    heading.subheader(case["case_id"])
+    badge.write(f"{status_label(case['status'])} · Revision {case['revision']}")
+    actions, evidence, history = st.tabs(["Review & actions", "Draft & evidence", "History"])
+    with actions:
+        show_review_panel(database, case)
+    with evidence:
+        with st.container(border=True):
+            show_pdf_export(database, case)
+        show_return(case)
+    with history:
+        show_history(database, case)
 
 
 if __name__ == "__main__":

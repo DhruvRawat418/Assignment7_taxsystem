@@ -1,5 +1,11 @@
 # SilverFile: teammate setup and demo guide
 
+The `yong/dashboard-security` update adds the staff workbench: search/status
+filters, direct attention links, and review/evidence/history tabs. Read the
+[dashboard guide and Docker handoff](docs/DASHBOARD_WORKBENCH.md) and
+[AI-use disclosure](docs/AI_DISCLOSURE_DASHBOARD.md). It retains the existing
+saved-case correction, stop and verified draft export paths.
+
 Use this guide for the integrated app. The older README includes historical component/skeleton instructions; commands such as `python run.py` are not the entry point for this integrated demonstration.
 
 This is a local class-project draft-preparation system. It runs intake and a LangGraph agent workflow, exposes a Streamlit staff dashboard, and exports a reviewed 2025 Form 1040-SR draft plus its audit record. Nothing is filed.
