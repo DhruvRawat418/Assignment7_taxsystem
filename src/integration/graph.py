@@ -264,6 +264,16 @@ def build_graph(providers=None, checkpointer=None, *, max_review_attempts=3, max
                     or not isinstance(response["response"], dict)):
                 raise ValueError
             validate_payload(response["response"], limit=1_000_000)
+            if response["response"] == {"reload_intake": True}:
+                if owner != "rules":
+                    raise ValueError
+
+                return dict(
+                    human_response={},
+                    human_resolution_fingerprint=semantic_digest(response),
+                    status="running",
+                    next_stage="intake",
+                )
             return dict(human_response=deepcopy(response), human_resolution_fingerprint=semantic_digest(response),
                         status="running", next_stage=owner)
         except (ValueError, TypeError, RecursionError):

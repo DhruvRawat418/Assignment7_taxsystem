@@ -81,7 +81,14 @@ def prepare_packet(intake, rules, extractions):
     """
     try:
         intake = validate_intake(intake)
-        if not isinstance(rules, dict) or set(rules) != {"profile", "clearance", "box_dispositions"}:
+        required_keys = {"profile", "clearance", "box_dispositions"}
+        allowed_keys = required_keys | {"line_12d_boxes"}
+
+        if (
+            not isinstance(rules, dict)
+            or not required_keys.issubset(rules)
+            or not set(rules).issubset(allowed_keys)
+        ):
             raise ValueError
         clearance = RulesClearance.model_validate(rules["clearance"])
         if not clearance.approved or clearance.blocking_conditions:

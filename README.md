@@ -1,6 +1,14 @@
 # Assignment7_taxsystem
 
-## Integration proposal (`yong/integration`)
+## Integration proposal
+# SilverFile integrated application
+
+Start here: [Installation and team demo guide](README_TEAM.md).
+
+This branch includes the integrated LangGraph workflow, staff dashboard,
+human-review controls, and draft 1040-SR PDF export.
+
+The older component documentation follows below.
 
 This branch preserves the existing Extraction (Xinrui), Computation (Xiaolong)
 and deterministic Audit (Yong) histories and adds a **runnable integration
