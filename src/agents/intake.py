@@ -15,6 +15,7 @@ resume a session days later at the exact question it stopped on.
 from __future__ import annotations
 
 import operator
+import re
 import uuid
 from datetime import datetime, timezone
 from typing import Annotated, Any, Optional, TypedDict
@@ -97,7 +98,29 @@ QUESTIONS = {
     "w2_files": "Please type the file name of each W-2 photo or scan. If there are several, separate them with commas.",
     "has_estimated_payments": f"Did you send the IRS any payments during {TAX_YEAR}, before filing?",
     "estimated_payments_total": "What was the total amount of those payments?",
+    "has_direct_schedule_amounts": "Do you have any other dollar amounts to enter from your completed tax schedules or payment records?",
 }
+
+# Transcribe already-known amounts; Intake never determines deductions or credits.
+DIRECT_AMOUNT_LINES = {
+    "schedule1_income": "8", "schedule1_adjustments": "10",
+    "schedule2_line3": "17", "direct_dependent_credits": "19",
+    "schedule3_line8": "20", "schedule2_line21": "23",
+    "other_withholding": "25c", "schedule3_line15": "32", "ss_adjustments": "ss_adjustments",
+}
+DIRECT_AMOUNT_QUESTIONS = {
+    "schedule1_income": "What is the amount on your completed Schedule 1, line 10?",
+    "schedule1_adjustments": "What is the amount on your completed Schedule 1, line 26?",
+    "schedule2_line3": "What is the amount on your completed Schedule 2, line 3?",
+    "direct_dependent_credits": "What child or other-dependent credit amount has your preparer supplied for Form 1040-SR, line 19?",
+    "schedule3_line8": "What is the amount on your completed Schedule 3, line 8?",
+    "schedule2_line21": "What is the amount on your completed Schedule 2, line 21?",
+    "other_withholding": "What other federal tax withholding amount belongs on Form 1040-SR, line 25c?",
+    "schedule3_line15": "What is the amount on your completed Schedule 3, line 15?",
+    "ss_adjustments": "What adjustment amount has your preparer supplied for the Social Security benefits worksheet?",
+}
+for _field, _question in DIRECT_AMOUNT_QUESTIONS.items():
+    QUESTIONS[_field] = _question + " Say none if there is no amount, or not sure if you need help."
 
 # Questions about the boxes of each form, asked only if the person has that form.
 # W-2 amounts are not asked: Document Extraction reads them from the image.
@@ -144,6 +167,8 @@ LABELS = {
     "wants_to_itemize": "Wants to itemize", "needs_state_return": "Wants a state return",
     "documents": "Tax forms", "w2_files": "W-2 files", "has_estimated_payments": "Payments sent during the year",
     "estimated_payments_total": "Total of those payments",
+    "has_direct_schedule_amounts": "Other schedule or payment amounts to enter",
+    **{field: question.rstrip("?") for field, question in DIRECT_AMOUNT_QUESTIONS.items()},
 }
 SCOPE_FIELDS = ["has_self_employment_income", "has_rental_income", "has_capital_gains",
                 "has_foreign_income_or_accounts", "taxpayer_can_be_claimed_as_dependent",
@@ -173,6 +198,8 @@ FIELD_KIND = {
     "estimated_payments_total": "amount", "documents": "documents",
     "dependent_name": "text", "dependent_relationship": "text", "dependent_ssn": "ssn",
     "mfs_lived_with_spouse": "yes_no", "w2_files": "files",
+    "has_direct_schedule_amounts": "yes_no",
+    **{field: "amount" for field in DIRECT_AMOUNT_LINES},
     **{f: "yes_no" for f in SCOPE_FIELDS},
     **{f: ("yes_no" if f in ("r_is_ira", "r_box2b") else "amount")
        for items in FORM_QUESTIONS.values() for f, _, _ in items},
@@ -250,6 +277,12 @@ def next_field(state: dict) -> str | None:
         return "has_estimated_payments"
     if _val(a, "has_estimated_payments") is True and "estimated_payments_total" not in a:
         return "estimated_payments_total"
+    if "has_direct_schedule_amounts" not in a:
+        return "has_direct_schedule_amounts"
+    if _val(a, "has_direct_schedule_amounts") is True:
+        for field in DIRECT_AMOUNT_LINES:
+            if field not in a:
+                return field
     return None
 
 
@@ -294,6 +327,16 @@ def _validate(field: str, value: str, scan) -> tuple[Any, str | None]:
         v = parse_yes_no(value)
         return (v, None) if v is not None else (None, "yes_no")
     if kind == "amount":
+        if field in DIRECT_AMOUNT_LINES:
+            text = value.strip()
+            negative = field == "schedule1_income" and text.startswith("-")
+            if negative:
+                text = text[1:].strip()
+            if not (re.fullmatch(r"\$?\s*(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{1,2})?", text)
+                    or (not negative and text.lower() in {"none", "nothing", "zero", "no"})):
+                return None, "amount"
+            parsed = parse_amount(text)
+            return (("-" if negative else "") + parsed.value, None) if parsed.value is not None else (None, "amount")
         p = parse_amount(value)
         if p.multiple_amounts:
             return None, "amount_multiple"

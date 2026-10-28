@@ -151,7 +151,7 @@ CLEAN_RUN = ["married filing together", "March 5, 1955", "no", "July 2, 1958", "
              "W-2, SSA-1099 and 1099-INT", "w2_clean.jpg",
              "$24,000", "none",          # SSA-1099 boxes 5 and 6
              "$310.40", "none", "none",  # 1099-INT boxes 1, 8 and 4
-             "no"]
+             "no", "no"]
 
 
 def run(graph, config, replies):

@@ -208,6 +208,14 @@ def render_intake(root):
         st.info('This interview was stopped after staff review. Its saved history is retained.')
     elif view['status'] == 'intake_needs_review':
         _intake_review(service, view)
+    elif view['status'] == 'interview_update_required':
+        st.info('This saved interview needs the additional schedule and payment questions before checks can start. Earlier answers are kept.')
+        if st.button('Complete remaining questions', type='primary'):
+            try:
+                service.continue_remaining(active, view['token'])
+                st.rerun()
+            except ValueError as error:
+                st.error(str(error))
     elif view['status'] == 'ready_for_checks':
         st.success('The interview is complete. Run checks to prepare a reviewed draft.')
         st.caption('This starts real document extraction and calculations, followed by a model review using your configured API key.')

@@ -16,7 +16,7 @@ import hashlib
 import sqlite3
 
 from src.agents.computation_contract import INPUT_LINES
-from src.agents.intake import SCOPE_FIELDS, pending_hitl
+from src.agents.intake import SCOPE_FIELDS, DIRECT_AMOUNT_LINES, pending_hitl
 from src.integration.contracts import ProviderResult
 
 FILING_STATUS = {
@@ -39,12 +39,29 @@ BOX_LINES = {
 }
 # Lines this system never asks about, because they only exist for out-of-scope
 # situations (business income, credits, other taxes...). The scope questions cover them.
-SCOPE_ZERO_LINES = ("8", "10", "17", "19", "20", "23", "25c", "32", "ss_adjustments")
+DIRECT_LINES = set(DIRECT_AMOUNT_LINES.values())
 SUPPORTED_FORMS = {"W-2", "SSA-1099", "1099-INT", "1099-DIV", "1099-R"}
 # Answers we cannot send as "unknown": without them there is no return to compute.
 MUST_KNOW = {"filing_status", "taxpayer_birth_date", "taxpayer_blind", "spouse_birth_date", "spouse_blind",
              "mfs_lived_with_spouse", "documents", "w2_files", "has_estimated_payments", *BOX_LINES,
              "r_is_ira", "r_box1", "r_box2a", "r_box2b"}
+MUST_KNOW.update({"has_direct_schedule_amounts", *DIRECT_AMOUNT_LINES})
+
+
+def _direct_amounts_reason(answers):
+    gate = answers.get("has_direct_schedule_amounts")
+    if gate is None:
+        return "intake_missing_direct_amounts"
+    if gate.get("status") != "answered" or gate.get("value") not in (True, False):
+        return "intake_unsure_answer"
+    if gate["value"] is True:
+        for field in DIRECT_AMOUNT_LINES:
+            rec = answers.get(field)
+            if rec and rec.get("status") != "answered":
+                return "intake_unsure_answer"
+        if any(field not in answers for field in DIRECT_AMOUNT_LINES):
+            return "intake_missing_direct_amounts"
+    return None
 
 
 def _answered(answers: dict, field: str):
@@ -66,6 +83,13 @@ def _amounts(answers: dict) -> dict:
     for field, line in BOX_LINES.items():
         if field in answers:
             amounts[line].append({"value": answers[field]["value"], "sources": [_source(field, answers[field])]})
+    direct_reason = _direct_amounts_reason(answers)
+    if direct_reason:
+        raise ValueError(direct_reason)
+    if _answered(answers, "has_direct_schedule_amounts") is True:
+        for field, line in DIRECT_AMOUNT_LINES.items():
+            rec = answers[field]
+            amounts[line].append({"value": rec["value"], "sources": [_source(field, rec)]})
     if "1099-R" in forms:
         ira = _answered(answers, "r_is_ira")
         for field, line in (("r_box1", "4a" if ira else "5a"), ("r_box2a", "4b" if ira else "5b")):
@@ -78,12 +102,15 @@ def _amounts(answers: dict) -> dict:
             continue
         if line == "26":
             rec, why = answers["has_estimated_payments"], "no payments sent during the year"
-        elif line in SCOPE_ZERO_LINES:
-            rec = {**docs_rec, "entered_by": "intake (outside supported scope)"}
-            why = f"line {line} not used in the supported scope"
+            source_field = "has_estimated_payments"
+        elif line in DIRECT_LINES:
+            rec = answers["has_direct_schedule_amounts"]
+            why = f"line {line}: taxpayer confirmed no other schedule or payment amounts"
+            source_field = "has_direct_schedule_amounts"
         else:
             rec, why = docs_rec, f"line {line}: no matching form listed"
-        amounts[line].append({"value": "0.00", "sources": [_source("documents", rec, why)]})
+            source_field = "documents"
+        amounts[line].append({"value": "0.00", "sources": [_source(source_field, rec, why)]})
 
     if "W-2" in forms:  # Extraction reads boxes 1 and 2 from the images: they own 1z and 25a.
         del amounts["1z"], amounts["25a"]
@@ -143,6 +170,8 @@ def not_ready_reason(session: dict | None) -> str | None:
         return "intake_not_finished"
     if any(rec["status"] == "unsure" for f, rec in session["answers"].items() if f in MUST_KNOW):
         return "intake_unsure_answer"
+    if reason := _direct_amounts_reason(session["answers"]):
+        return reason
     return None
 
 

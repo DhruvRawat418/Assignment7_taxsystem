@@ -99,6 +99,8 @@ class CaseService:
             status = 'intake_stopped'
         elif state.get('intake_complete'):
             status = 'intake_needs_review' if uncertain else 'ready_for_checks'
+            if not uncertain and not_ready_reason(state) == 'intake_missing_direct_amounts' and not self.workflow_state(case_id):
+                status = 'interview_update_required'
         else:
             status = 'interview_in_progress'
         return dict(case_id=case_id, status=status, pending=deepcopy(prompt),
@@ -120,6 +122,18 @@ class CaseService:
             except ValueError:continue
             views.append(self.view(case_id))
         return views
+
+    def continue_remaining(self, case_id, token):
+        """Explicitly resume a pre-extension interview, preserving its answers."""
+        with _LOCK, self._interview() as graph:
+            snap = graph.get_state(self._config(case_id))
+            if (not snap.values or snap.config['configurable']['checkpoint_id'] != token
+                    or _pending(snap) or self.workflow_state(case_id)
+                    or not_ready_reason(snap.values) != 'intake_missing_direct_amounts'):
+                raise ValueError('Only an unchanged interview with missing questions can continue here.')
+            graph.update_state(self._config(case_id), {'intake_complete': False}, as_node='intake')
+            graph.invoke(None, self._config(case_id))
+        return self.view(case_id)
 
     def _checked_snapshot(self, graph, case_id, token, field=None):
         snapshot = graph.get_state(self._config(case_id))

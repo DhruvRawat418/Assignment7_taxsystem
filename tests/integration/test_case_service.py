@@ -20,7 +20,7 @@ def complete(s, case_id, *, w2=False, itemize=False):
         has_dependents='no',has_self_employment_income='no',has_rental_income='no',has_capital_gains='no',
         has_foreign_income_or_accounts='no',taxpayer_can_be_claimed_as_dependent='no',
         wants_to_itemize='yes' if itemize else 'no',needs_state_return='no',
-        documents='W-2' if w2 else 'SSA-1099',ssa1099_box5='24000',ssa1099_box6='none',has_estimated_payments='no')
+        documents='W-2' if w2 else 'SSA-1099',ssa1099_box5='24000',ssa1099_box6='none',has_estimated_payments='no',has_direct_schedule_amounts='no')
     for _ in range(35):
         if view['status']=='ready_for_checks':return view
         if view['pending']['field']=='w2_files':return view
@@ -150,7 +150,7 @@ def test_uncertain_answer_can_be_revisited_without_losing_other_answers(tmp_path
     answers=dict(taxpayer_birth_date='March 5, 1955',taxpayer_blind='no',has_dependents='no',
         has_self_employment_income='no',has_rental_income='no',has_capital_gains='no',has_foreign_income_or_accounts='no',
         taxpayer_can_be_claimed_as_dependent='no',wants_to_itemize='no',needs_state_return='no',
-        documents='SSA-1099',ssa1099_box5='24000',ssa1099_box6='none',has_estimated_payments='no')
+        documents='SSA-1099',ssa1099_box5='24000',ssa1099_box6='none',has_estimated_payments='no',has_direct_schedule_amounts='no')
     for _ in range(30):
         if not v['pending']:break
         v=s.answer('uncertain',v['token'],answers[v['pending']['field']])
@@ -167,3 +167,19 @@ def test_upload_paths_are_not_treated_as_taxpayer_ssns(tmp_path):
     raw=BytesIO();Image.new('RGB',(20,20),'white').save(raw,format='PNG')
     v=s.upload_w2('host-path',v['token'],[('test.png',raw.getvalue())])
     assert v['pending']['field']=='has_estimated_payments'
+
+
+def test_legacy_complete_interview_can_resume_missing_questions_safely(tmp_path):
+    from langgraph.checkpoint.sqlite import SqliteSaver
+    from demo.run_intake import build_graph
+    from src.agents.intake_parser import RuleParser
+    s=service(tmp_path);v=complete(s,'legacy')
+    cfg={'configurable':{'thread_id':'legacy'}}
+    with SqliteSaver.from_conn_string(str(tmp_path/'intake_sessions.db')) as saver:
+        graph=build_graph(RuleParser(),saver)
+        graph.update_state(cfg,{'answers':{'has_direct_schedule_amounts':'__delete__'},'intake_complete':True},as_node='intake')
+    v=s.view('legacy')
+    assert v['status']=='interview_update_required'
+    v=s.continue_remaining('legacy',v['token'])
+    assert v['pending']['field']=='has_direct_schedule_amounts'
+    with pytest.raises(ValueError):s.continue_remaining('legacy','stale-checkpoint')

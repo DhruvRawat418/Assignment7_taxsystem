@@ -14,7 +14,7 @@ from tests.integration.fixtures import extracted, rules_data
 from tests.intake.test_agent import NO_SCOPE, answer
 
 SINGLE_W2_SSA = ["single", "March 5, 1955", "no", "no", *NO_SCOPE, "W-2 and SSA-1099", "w2_clean.jpg",
-                 "$24,000", "none", "no"]
+                 "$24,000", "none", "no", "no"]
 
 
 def interview(replies):
@@ -59,7 +59,7 @@ def test_packet_reaches_computation_through_the_real_adapter():
 
 
 def test_no_w2_means_intake_supplies_wages_as_zero():
-    replies = ["single", "March 5, 1955", "no", "no", *NO_SCOPE, "SSA-1099", "$24,000", "none", "no"]
+    replies = ["single", "March 5, 1955", "no", "no", *NO_SCOPE, "SSA-1099", "$24,000", "none", "no", "no"]
     packet = to_packet(interview(replies))
     assert packet["documents"] == []
     assert packet["amounts"]["1z"][0]["value"] == "0.00"
@@ -68,8 +68,8 @@ def test_no_w2_means_intake_supplies_wages_as_zero():
 
 def test_1099r_goes_to_ira_or_pension_lines():
     base = ["single", "March 5, 1955", "no", "no", *NO_SCOPE, "1099-R"]
-    ira = to_packet(interview([*base, "yes", "$10,000", "$10,000", "no", "$1,000", "no"]))["amounts"]
-    pension = to_packet(interview([*base, "no", "$8,000", "$6,000", "no", "none", "no"]))["amounts"]
+    ira = to_packet(interview([*base, "yes", "$10,000", "$10,000", "no", "$1,000", "no", "no"]))["amounts"]
+    pension = to_packet(interview([*base, "no", "$8,000", "$6,000", "no", "none", "no", "no"]))["amounts"]
     assert ira["4a"][0]["value"] == "10000.00" and ira["5a"][0]["value"] == "0.00"
     assert pension["5b"][0]["value"] == "6000.00" and pension["4b"][0]["value"] == "0.00"
     assert ira["25b"][0]["value"] == "1000.00"
@@ -77,7 +77,7 @@ def test_1099r_goes_to_ira_or_pension_lines():
 
 def test_dependent_ssn_never_leaves_intake():
     replies = ["single", "March 5, 1955", "no", "yes", "Lily Park", "granddaughter", "901-23-4567", "no",
-               *NO_SCOPE, "SSA-1099", "$24,000", "none", "no"]
+               *NO_SCOPE, "SSA-1099", "$24,000", "none", "no", "no"]
     packet = to_packet(interview(replies))
     assert "901-23-4567" not in json.dumps(packet)
     assert any("dependent" in n for n in packet["facts"]["free_text_notes"])

@@ -49,7 +49,7 @@ def test_complete_w2_case_and_download_entirely_in_gui(tmp_path,monkeypatch):
     answers=dict(filing_status='single',taxpayer_birth_date='March 5, 1955',taxpayer_blind='no',has_dependents='no',
         has_self_employment_income='no',has_rental_income='no',has_capital_gains='no',
         has_foreign_income_or_accounts='no',taxpayer_can_be_claimed_as_dependent='no',
-        wants_to_itemize='no',needs_state_return='no',documents='W-2',has_estimated_payments='no')
+        wants_to_itemize='no',needs_state_return='no',documents='W-2',has_estimated_payments='no',has_direct_schedule_amounts='no')
     for _ in range(30):
         view=service(tmp_path).view('browser-w2')
         if view['status']=='ready_for_checks':break

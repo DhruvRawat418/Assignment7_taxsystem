@@ -33,9 +33,10 @@ STATUS_LABELS = {
     "interview_in_progress": "Interview in progress",
     "intake_needs_review": "Interview needs review",
     "ready_for_checks": "Ready for checks",
+    "interview_update_required": "Additional questions needed",
     "intake_stopped": "Interview stopped",
 }
-ATTENTION_STATUSES = {"paused_for_human_review", "needs_input", "blocked", "intake_needs_review", "ready_for_checks", "interview_in_progress"}
+ATTENTION_STATUSES = {"paused_for_human_review", "needs_input", "blocked", "intake_needs_review", "ready_for_checks", "interview_in_progress", "interview_update_required"}
 STAGE_LABELS = {
     "intake": "Intake", "extract": "Document extraction", "rules": "Eligibility & rules",
     "compute": "Calculation", "audit": "Calculation audit", "adversarial": "Independent review",
