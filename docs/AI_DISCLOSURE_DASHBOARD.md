@@ -15,3 +15,8 @@ New tests use synthetic cases and an explicit fake model response; they do not
 establish live-model quality. No real taxpayer data, paid model call, filing or
 Docker build occurred. Yong remains responsible for understanding, reviewing and
 demonstrating the changes and accurately describing his Security specialization.
+
+For the subsequent GUI refinement, Codex also prepared the local CSS asset,
+sidebar theme, escaped case/status presentation and two injection regression
+tests, then inspected fresh desktop and narrow-screen browser renders. Existing
+case actions and backend workflows remain credited to their original authors.

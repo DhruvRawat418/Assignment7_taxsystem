@@ -40,6 +40,18 @@ def test_ready_is_never_labelled_submitted_or_filed():
     assert dashboard.status_label('unexpected_status') == 'Unknown'
 
 
+def test_case_identity_markup_cannot_inject_html():
+    assert hasattr(dashboard, 'case_identity_html'), 'Escaped case identity presentation is not implemented'
+    markup = dashboard.case_identity_html('<img src=x onerror="bad()"> & account')
+    assert '<img' not in markup and '&lt;img' in markup and '&amp; account' in markup
+
+
+def test_status_badge_does_not_reflect_untrusted_status_markup():
+    assert hasattr(dashboard, 'status_badge_html'), 'Status badge presentation is not implemented'
+    markup = dashboard.status_badge_html('<script>bad()</script>')
+    assert '<script>' not in markup and 'Unknown' in markup
+
+
 @pytest.fixture
 def app_data(tmp_path, monkeypatch):
     async def fake_model(messages):

@@ -2,6 +2,7 @@
 from contextlib import closing
 from pathlib import Path
 from datetime import datetime
+from html import escape
 from zoneinfo import ZoneInfo
 import sqlite3
 import asyncio
@@ -69,40 +70,47 @@ def choose_case(case_id):
     st.session_state["open_case_id"] = case_id
 
 
+def case_identity_html(case_id):
+    return '<div class="sf-case-name">' + escape(str(case_id)) + '</div>'
+
+
+def status_badge_html(status):
+    tone = {
+        "paused_for_human_review": "review", "needs_input": "information",
+        "blocked": "blocked", "running": "progress",
+        "ready_for_human_review": "ready", "stopped": "neutral",
+    }.get(status, "neutral")
+    return f'<span class="sf-status sf-status--{tone}"><span aria-hidden="true">●</span> {escape(status_label(status))}</span>'
+
+
 def workbench_style():
     # Static local CSS only: no case data, remote fonts or script injection.
-    st.markdown("""<style>
-        .stMainBlockContainer {max-width: 1440px; padding-top: 2.25rem; padding-bottom: 3rem;}
-        h1 {letter-spacing: -0.045em; font-weight: 750 !important;}
-        h2, h3 {letter-spacing: -0.02em;}
-        [data-testid="stMetric"] {background: #fff; border: 1px solid #dce5e8;
-            border-radius: 12px; padding: 1rem 1.2rem;}
-        [data-testid="stMetricValue"] {font-variant-numeric: tabular-nums;}
-        [data-testid="stSidebar"] {border-right: 1px solid #dce5e8;}
-        [data-testid="stVerticalBlockBorderWrapper"] {border-radius: 12px;}
-        button {font-weight: 550 !important;}
-    </style>""", unsafe_allow_html=True)
+    css = (Path(__file__).resolve().parent / "assets" / "dashboard.css").read_text()
+    st.markdown("<style>" + css + "</style>", unsafe_allow_html=True)
 
 
 def show_attention_queue(cases):
     attention = [case for case in cases if case["status"] in ATTENTION_STATUSES]
     if not attention:
         return
-    st.subheader("Needs attention")
-    st.caption("Open a case to inspect the request and take the next available action.")
-    for case in sorted(attention, key=lambda c: (c["status"] != "paused_for_human_review", c["case_id"])):
-        with st.container(border=True):
-            description, state_column, action = st.columns([5, 2, 2], vertical_alignment="center")
-            description.write(case["case_id"])
-            issue = next(iter(case.get("issues", [])), {})
-            description.caption(ISSUE_LABELS.get(issue.get("code"),
-                "A staff decision is needed." if case["pending_reviews"] else "Inspect the case for the next step."))
-            state_column.write(status_label(case["status"]))
-            state_column.caption(f"Revision {case['revision']}")
-            label = "Review" if case["status"] == "paused_for_human_review" else "Inspect"
-            action.button(f"{label} {case['case_id']}", key="attention_" + case["case_id"],
-                          on_click=choose_case, args=(case["case_id"],), width="stretch",
-                          type="primary" if label == "Review" else "secondary")
+    st.markdown(f'<div class="sf-section-title"><h2>Needs attention</h2><span class="sf-count">{len(attention)}</span></div>', unsafe_allow_html=True)
+    st.caption("Review the request, verify the saved facts, and choose the next step.")
+    ordered = sorted(attention, key=lambda c: (c["status"] != "paused_for_human_review", c["case_id"]))
+    for start in range(0, len(ordered), 2):
+        columns = st.columns(2, gap="medium")
+        for column, case in zip(columns, ordered[start:start + 2]):
+            with column, st.container(border=True, key="attention_card_" + case["case_id"]):
+                st.markdown(status_badge_html(case["status"]), unsafe_allow_html=True)
+                st.markdown(case_identity_html(case["case_id"]), unsafe_allow_html=True)
+                issue = next(iter(case.get("issues", [])), {})
+                st.caption(ISSUE_LABELS.get(issue.get("code"),
+                    "A staff decision is needed." if case["pending_reviews"] else "Inspect the case for the next step."))
+                revision, action = st.columns([1, 2], vertical_alignment="center")
+                revision.caption(f"Revision {case['revision']}")
+                label = "Review" if case["status"] == "paused_for_human_review" else "Inspect"
+                action.button(f"{label} {case['case_id']}", key="attention_" + case["case_id"],
+                              on_click=choose_case, args=(case["case_id"],), width="stretch",
+                              type="primary" if label == "Review" else "secondary")
 
 
 def show_review_panel(database, case):
@@ -493,16 +501,19 @@ def main(database=None):
     st.set_page_config(page_title="SilverFile staff dashboard", page_icon="📋", layout="wide")
     workbench_style()
     with st.sidebar:
-        st.title("SilverFile")
-        st.caption("STAFF WORKSPACE · TAX YEAR 2025")
+        st.markdown('<div class="sf-brand"><span class="sf-brand-mark" aria-hidden="true">S</span><div>SilverFile<small>REVIEW OPERATIONS</small></div></div>', unsafe_allow_html=True)
+        st.markdown('<div class="sf-sidebar-section">CASE MANAGEMENT</div><div class="sf-sidebar-active"><span aria-hidden="true">▦</span> Case workspace</div>', unsafe_allow_html=True)
         st.divider()
+        st.markdown('<div class="sf-sidebar-section">FIND A CASE</div>', unsafe_allow_html=True)
         query = st.text_input("Search cases", placeholder="Case ID or issue")
         selected_status = st.selectbox("Status filter", ["All statuses", *STATUS_LABELS.values()])
         st.button("Refresh cases", width="stretch")
         st.divider()
+        st.markdown('<div class="sf-sidebar-foot"><span aria-hidden="true">●</span> Local workspace<small>Tax year 2025 · Draft preparation</small></div>', unsafe_allow_html=True)
         st.caption("Local, single-operator workspace. Drafts require staff review before use.")
+    st.markdown('<div class="sf-topline"><span>OPERATIONS <span aria-hidden="true">/</span> CASE MANAGEMENT</span><span class="sf-year">2025 TAX YEAR</span></div>', unsafe_allow_html=True)
     st.title("Case workspace")
-    st.caption("Find a case, resolve a review request, and inspect the evidence behind each draft.")
+    st.caption("A clear view of every case. Review requests, verify evidence, and prepare the next draft.")
     if "action_result" in st.session_state:
         case_id, result = st.session_state.pop("action_result")
         if result["status"] == "ready_for_human_review":
@@ -522,10 +533,16 @@ def main(database=None):
         st.info("No saved workflow cases yet. Run an intake handoff, then refresh this page.")
         return
     columns = st.columns(4)
-    columns[0].metric("Saved cases", len(cases))
-    columns[1].metric("Needs attention", sum(c["status"] in ATTENTION_STATUSES for c in cases))
-    columns[2].metric("Drafts ready", sum(c["status"] == "ready_for_human_review" for c in cases))
-    columns[3].metric("In progress", sum(c["status"] == "running" for c in cases))
+    summaries = [
+        ("saved", "Saved cases", len(cases), "All saved records"),
+        ("attention", "Needs attention", sum(c["status"] in ATTENTION_STATUSES for c in cases), "Staff follow-up needed"),
+        ("ready", "Drafts ready", sum(c["status"] == "ready_for_human_review" for c in cases), "Prepared for staff review"),
+        ("progress", "In progress", sum(c["status"] == "running" for c in cases), "Active workflows"),
+    ]
+    for column, (key, label, value, caption) in zip(columns, summaries):
+        with column, st.container(key="summary_" + key):
+            st.metric(label, value)
+            st.caption(caption)
     st.write("")
     visible = filter_cases(cases, query, selected_status)
     if not visible:
@@ -547,7 +564,8 @@ def main(database=None):
     st.divider()
     heading, badge = st.columns([4, 2], vertical_alignment="center")
     heading.subheader(case["case_id"])
-    badge.write(f"{status_label(case['status'])} · Revision {case['revision']}")
+    badge.markdown(status_badge_html(case["status"]), unsafe_allow_html=True)
+    badge.caption(f"Revision {case['revision']}")
     actions, evidence, history = st.tabs(["Review & actions", "Draft & evidence", "History"])
     with actions:
         show_review_panel(database, case)

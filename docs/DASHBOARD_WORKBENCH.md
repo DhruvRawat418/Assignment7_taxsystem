@@ -40,7 +40,8 @@ claim a built or verified image. A Dockerfile alone is not evidence that the
 container works. The packaging owner should:
 
 - Include `.streamlit/config.toml`, `dashboard.py`, `pdf_export.py`, the agent
-  modules, the pinned PDF template and all `requirements-team.txt` dependencies.
+  modules, `assets/dashboard.css`, the pinned PDF template and all
+  `requirements-team.txt` dependencies.
 - Keep `.env`, secrets, local virtual environments, `.git`, generated downloads
   and interview/workflow databases out of the image build context.
 - Make the two SQLite database locations writable and persistent. Current
@@ -79,7 +80,7 @@ macOS 13.0 host):
 - `tests/test_review_regressions.py::test_unreadable_optional_amount_from_real_pixels`
 - `tests/test_review_regressions.py::test_masked_identifiers_from_real_pixels`
 
-An independent code review found no Critical or Important defects and separately
+An independent code review of the initial workbench found no Critical or Important defects and separately
 checked filter changes, empty search, clearing search and direct review navigation.
 Paid-model quality, real OCR and a Docker build remain separate verification.
 
@@ -88,3 +89,19 @@ Streamlit behavior was checked against installed 1.66.1 and the official
 [button](https://docs.streamlit.io/develop/api-reference/widgets/st.button) and
 [AppTest](https://docs.streamlit.io/develop/api-reference/app-testing/st.testing.v1.apptest)
 documentation. AppTest is a simulated application test, not a screen-reader audit.
+
+## Visual refinement
+
+The subsequent GUI pass adds a navy sidebar with local SilverFile branding,
+neutral content canvas, coordinated summary cards, semantic status badges and a
+two-column attention-card layout that stacks on narrow screens. All styles live
+in `assets/dashboard.css`; the sidebar theme is in `.streamlit/config.toml`.
+No external font/image dependency or tax-processing change was introduced.
+
+Case identity text is HTML-escaped and badge styles come only from a fixed
+application catalog. Two regression tests reject HTML injection/reflection.
+Updated targeted results: **17 passed**. Full suite: **273 passed, the same 8 OCR
+setup errors, 21 subtests passed**. Fresh Chrome sessions verified actual case
+selection and the evidence tab; desktop/evidence/mobile screenshots were inspected.
+The narrow-screen document width matched its 390-pixel viewport. This is visual
+and interaction verification, not a formal accessibility certification.
