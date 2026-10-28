@@ -1,5 +1,7 @@
 # SilverFile: teammate setup and demo guide
 
+**Submission status:** see [remaining requirements and owner actions](docs/SUBMISSION_CHECKLIST.md), [full clean demo](demo/eval_case_1.md), [full HITL demo](demo/eval_case_2.md), and [measured context experiment](docs/metrics.md).
+
 **Complete browser workflow:** click **New case** to conduct the saved interview,
 upload a synthetic W-2, configure the session's model key and run checks without
 a terminal handoff. See [browser workflow and local OCR setup](docs/BROWSER_WORKFLOW.md).
@@ -17,14 +19,14 @@ This is a local class-project draft-preparation system. It runs intake and a Lan
 
 ## 1. Download the integration branch
 
-Dhruv must first publish the branch described in PUBLISH_STEPS.md. Then:
+Use the browser-extension branch for the complete browser flow. Dhruv's original integration remains its base:
 
 ```sh
-git clone --branch dhruv/silverfile-integrated https://github.com/DhruvRawat418/Assignment7_taxsystem.git
+git clone --branch yong/dashboard-security https://github.com/DhruvRawat418/Assignment7_taxsystem.git
 cd Assignment7_taxsystem
 ```
 
-If the repository is private, sign into GitHub with an account that has access. Alternatively, open the repository on GitHub, choose `dhruv/silverfile-integrated` in the branch selector, and choose Code > Download ZIP. Extract it and open the extracted folder in VS Code. Do not download the default branch unless this work has been merged there.
+If the repository is private, sign into GitHub with an account that has access. Alternatively, open the repository on GitHub, choose `yong/dashboard-security` in the branch selector, and choose Code > Download ZIP. Extract it and open the extracted folder in VS Code. Do not download the default branch unless this work has been merged there.
 
 Open a terminal in the project root. You should see `dashboard.py`, `pdf_export.py`, `requirements-team.txt`, `src/`, and `demo/`. All commands below run from this root.
 
@@ -244,7 +246,7 @@ Official references: https://docs.langchain.com/oss/python/langgraph/overview an
 
 ## 11. Known limits and handoff
 
-This is an integrated demo, not a claim of full assignment coverage. The PDF populates reviewed monetary lines, filing status, and age/blindness boxes. Current intake does not collect names/addresses, and it escalates dependent cases. Several permitted direct Schedule 1/2/3 inputs still default to zero upstream. Bank instructions, signatures, uncollected elections, and refund allocation remain blank. Supporting schedules are not generated.
+This is an integrated demo, not a claim of full assignment coverage. The PDF populates reviewed monetary lines, filing status, and age/blindness boxes. Current intake does not collect names/addresses, and it escalates dependent cases. The browser extension now collects direct Schedule/payment amounts, or sources zero to an explicit no-amounts answer. Some defaulted scope flags and dependent-success handling still need team work. Bank instructions, signatures, uncollected elections, and refund allocation remain blank. Supporting schedules are not generated.
 
 The dashboard is local and single-operator. No staff authentication or concurrent-write coordination has been implemented. See docs/ORCHESTRATION_DASHBOARD_HANDOFF.md and docs/PDF_EXPORT.md for details and ownership boundaries. Docker and the report are separate teammate tasks. Record original agent authorship and AI assistance accurately.
 

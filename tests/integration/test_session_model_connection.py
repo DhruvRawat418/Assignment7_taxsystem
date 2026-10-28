@@ -24,3 +24,19 @@ async def test_explicit_key_is_bound_to_client_without_environment_mutation(monk
     assert await call([{'role':'user','content':'Synthetic evidence'}])=={'findings':[]}
     assert captured[0]['api_key']=='session-private-key'
     assert os.environ.get('OPENAI_API_KEY')==before
+
+@pytest.mark.asyncio
+async def test_usage_can_be_recorded_outside_case_state(monkeypatch):
+    from src.agents import openai_transport as transport
+    captured=[]
+    class Client:
+        def __init__(self,**kwargs):self.responses=SimpleNamespace(parse=self.parse)
+        async def __aenter__(self):return self
+        async def __aexit__(self,*args):pass
+        async def parse(self,**kwargs):
+            return SimpleNamespace(status='completed',output_parsed=ReviewReport(findings=[]),
+                usage=SimpleNamespace(input_tokens=123,output_tokens=7))
+    monkeypatch.setattr(transport,'AsyncOpenAI',Client)
+    call=transport.make_openai_review_call(api_key='test-key',usage_callback=captured.append)
+    report=await call([{'role':'user','content':'Synthetic evidence'}])
+    assert report=={'findings':[]} and captured==[{'input_tokens':123,'output_tokens':7}]

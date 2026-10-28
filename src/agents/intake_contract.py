@@ -37,8 +37,8 @@ BOX_LINES = {
     "div_box1a": "3b", "div_box1b": "3a", "div_box4": "25b",
     "r_box4": "25b", "estimated_payments_total": "26",
 }
-# Lines this system never asks about, because they only exist for out-of-scope
-# situations (business income, credits, other taxes...). The scope questions cover them.
+# Existing Computation inputs entered from completed schedules/payment records.
+# Missing answers never authorize zero; an explicit no-amounts answer can.
 DIRECT_LINES = set(DIRECT_AMOUNT_LINES.values())
 SUPPORTED_FORMS = {"W-2", "SSA-1099", "1099-INT", "1099-DIV", "1099-R"}
 # Answers we cannot send as "unknown": without them there is no return to compute.
@@ -95,8 +95,8 @@ def _amounts(answers: dict) -> dict:
         for field, line in (("r_box1", "4a" if ira else "5a"), ("r_box2a", "4b" if ira else "5b")):
             amounts[line].append({"value": answers[field]["value"], "sources": [_source(field, answers[field])]})
 
-    # A line with no entry is a confirmed zero: the person told us which forms they have
-    # (or that they sent no payments), or the line is outside the supported scope.
+    # Source an absent form/payment line to its explicit inventory answer. Direct
+    # schedule lines require the separate confirmed no-amounts decision above.
     for line, entries in amounts.items():
         if entries:
             continue

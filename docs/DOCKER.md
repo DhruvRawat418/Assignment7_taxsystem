@@ -15,12 +15,12 @@ click **New case**; the old CLI creation instructions below are optional.
 
 # Run SilverFile with Docker
 
-Run commands from the repository root on the `xiaolong/docker` branch. Install Docker Desktop (macOS/Windows) or Docker Engine with the Compose plugin (Linux). In GitHub Codespaces, use the terminal in this repository. Check that `docker info` and `docker compose version` succeed.
+Run commands from the repository root on the `yong/dashboard-security` branch. Install Docker Desktop (macOS/Windows) or Docker Engine with the Compose plugin (Linux). In GitHub Codespaces, use the terminal in this repository. Check that `docker info` and `docker compose version` succeed.
 
 For a fresh checkout:
 
 ```sh
-git clone --branch xiaolong/docker https://github.com/DhruvRawat418/Assignment7_taxsystem.git
+git clone --branch yong/dashboard-security https://github.com/DhruvRawat418/Assignment7_taxsystem.git
 cd Assignment7_taxsystem
 ```
 

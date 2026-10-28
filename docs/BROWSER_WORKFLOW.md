@@ -38,6 +38,21 @@ complete, use **Answer to revisit** to reopen an uncertain question. Intake aler
 require an attributed staff decision. Unreadable W-2 cases offer **Replace W-2
 documents** with replacement history, followed by an explicit rerun.
 
+## Direct schedules and older interviews
+
+After the estimated-payment question, confirm whether there are other amounts
+from completed schedules or payment records. **No** explicitly sources zeros to
+that answer. **Yes** asks each existing schedule/credit/withholding amount
+separately; Intake transcribes and never decides what deduction or credit applies.
+Use **not sure** when a preparer needs to confirm an amount. Unknown/missing
+answers cannot hand off as zero. Negative line8 amounts are transcribed with the
+sign; other direct amounts reject negative/malformed entries rather than flipping
+their signs. No arithmetic moved out of MCP.
+
+Pre-extension interviews not yet handed off show **Complete remaining questions**.
+The checkpoint-checked action preserves earlier answers. Previously reviewed cases
+are historical results and are not silently rewritten by viewing the page.
+
 ## Credential, upload and state boundaries
 
 - The password field is retained only in the current Streamlit session and can be
@@ -82,7 +97,9 @@ host; its owner must verify the intended runtime. No Docker image was built here
 
 ## Verification and limits
 
-Final full suite: **305 passed, 21 subtests passed in 57.43 seconds**. This includes
+Browser-lifecycle baseline: **305 passed, 21 subtests passed in 57.43 seconds**.
+After the Schedule/context/packaging extension, the fresh full suite recorded
+**320 passed, 21 subtests passed in 53.05 seconds**. This includes
 all eight formerly failing actual-image tests. GUI tests create a new case,
 complete the original interview, attach and OCR the real synthetic image, run
 actual MCP computation/audit and export a PDF with wages **38,750.25**, using only
@@ -98,6 +115,6 @@ submission. No paid model request was made during development. Real account/mode
 availability still requires the user's configured key and explicit check action.
 
 This closes the browser-interaction gap. It does not expand tax scope or repair
-all original Intake/Rules limitations: some Schedule inputs remain assumed zeros,
+all original Intake/Rules limitations: Schedule inputs now have explicit confirmation, while some scope flags still default;
 identity/address fields are still uncollected, and the PDF remains a draft.
 See the team's original handoff for remaining assignment requirements.

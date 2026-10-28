@@ -77,7 +77,7 @@ def app_data(tmp_path, monkeypatch):
                 for case_id,blocked in [('draft-1',False),('review-1',True)]:
                     scope=['no']*7
                     if blocked:scope[5]='yes'
-                    session=interview(['single','March 5, 1955','no','no',*scope,'SSA-1099','24000','none','no'])
+                    session=interview(['single','March 5, 1955','no','no',*scope,'SSA-1099','24000','none','no','no'])
                     c={'configurable':{'thread_id':case_id}}
                     await inter.aupdate_state(c,session,as_node='intake')
                     await graph.ainvoke(new_case(case_id),c)

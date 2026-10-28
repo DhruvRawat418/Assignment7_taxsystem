@@ -1,3 +1,66 @@
+# SilverFile — browser workflow and staff review
+
+Use branch **`yong/dashboard-security`** for this browser extension. The shared
+`main` branch may not yet contain the integrated app. Start with
+[README_TEAM.md](README_TEAM.md) for setup and [BROWSER_WORKFLOW.md](docs/BROWSER_WORKFLOW.md)
+for browser steps. The original agents remain credited to their team authors.
+
+**Current functionality:** create/resume a case, answer one question at a time,
+attach a synthetic W-2, run OCR/Rules/MCP/Audit/model review, handle supported
+human corrections, and download a reviewed draft PDF with source evidence.
+Nothing is filed; unresolved or stale cases cannot export.
+
+**Submission is still in progress.** See [remaining requirements](docs/SUBMISSION_CHECKLIST.md),
+[clean demo](demo/eval_case_1.md), [HITL demo](demo/eval_case_2.md),
+[context measurement](docs/metrics.md), and [Docker instructions](docs/DOCKER.md).
+The context table is local tokenizer evidence, not a completed live API experiment.
+Identity/dependent-success coverage and remaining scope defaults still need team work.
+
+## Overall orchestration
+
+The actual graph is a deterministic supervisor with separate workers. Every
+worker returns to the supervisor, which owns the next hop and termination.
+Extraction fans out through LangGraph Send, then aggregates with its reducer.
+
+```mermaid
+flowchart TD
+    UI[Browser: create and resume] --> I[Intake interview: one question at a time]
+    I --> DB[(SQLite checkpoints and source answers)]
+    I --> S{Workflow supervisor}
+    S --> IP[Intake provider: validated handoff]
+    IP --> S
+    S -->|Send per document| E1[Extraction worker 1]
+    S -->|Send per document| E2[Extraction worker N]
+    E1 --> A[Aggregation and evidence reducer]
+    E2 --> A
+    A --> S
+    S --> R[Eligibility and Rules with citations]
+    R --> S
+    S --> C[Computation via deterministic MCP tools]
+    C --> S
+    S --> D[Audit: independent deterministic replay]
+    D --> S
+    S --> V[Adversarial model review]
+    V -->|Findings route back to owning worker| S
+    S --> H[LangGraph human-review interrupt]
+    H --> U[Staff correction or stop]
+    U -->|Invalidate and recheck corrected source| S
+    S --> G[Bounded loop and no-progress guard]
+    G --> B[Blocked or stopped: no PDF]
+    S -->|Current computation and both reviews clear| F[Draft ready for human review]
+    F --> P[Four-page draft PDF and audit JSON]
+    S -. saved state .-> DB
+```
+
+The diagram shows allowed routes, not simultaneous execution of every stage.
+Only document extraction is the genuine parallel branch. The review/revise
+cycle rechecks evidence; a human action cannot simply mark stale calculations
+approved. Inspect [the graph implementation](src/integration/graph.py) and tests
+for routing, reducer behavior and explicit iteration/no-progress bounds.
+
+<details>
+<summary>Historical component and integration-skeleton notes (use current links above for setup)</summary>
+
 # Assignment7_taxsystem
 
 ## Integration proposal
@@ -193,3 +256,5 @@ python -m pytest -c tests/computation/pytest.ini tests/computation -q
 
 This contribution implements only Computation. The other agents, global graph,
 dashboard, PDF export, and complete application remain team integration work.
+
+</details>

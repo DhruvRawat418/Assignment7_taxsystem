@@ -30,3 +30,16 @@ original Intake questions/rules, computation tools and exporter remain teammate
 work; narrowly required Intake input-boundary changes are included and attributed
 in this update. End-to-end tests use actual synthetic-image OCR and MCP but a
 mocked external reviewer. No live model request or tax filing was performed.
+
+
+For submission-readiness work, Codex assisted Yong with integrating Xiaolong's
+Docker packaging (original commit d2c110f), adding persistent browser-upload and
+static-asset configuration, collecting explicit direct Schedule amounts with
+input provenance, safely continuing old interviews, and preparing full GUI demo
+instructions. Codex also implemented a bounded selective-recall experiment and
+its optional live-usage recorder, tests and documentation. Offline measured input
+content tokens are identified as local tokenizer counts, not paid API usage.
+Xiaolong retains authorship of the base Docker work. No real identity data,
+actual API credential, paid model call, filing, or local container build was used
+for this extension. Yong should verify live behavior with his own key and explain
+remaining assignment gaps accurately.

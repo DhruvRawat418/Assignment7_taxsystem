@@ -4,6 +4,7 @@ import asyncio
 import json
 
 from src.agents.adversarial_contract import ReviewReport
+from src.agents.review_context import ReviewContext
 from src.integration.contracts import ProviderResult
 
 
@@ -34,7 +35,7 @@ Return a JSON object with exactly one top-level field: findings.
 """
 
 
-def make_adversarial_provider(model_call=None):
+def make_adversarial_provider(model_call=None, *, context=None):
     """model_call must be an async function accepting a list of messages.
 
     It must return a decoded JSON dictionary matching ReviewReport.
@@ -79,10 +80,8 @@ def make_adversarial_provider(model_call=None):
                     issue_codes=("review_packet_too_large",),
                 )
 
-            messages = [
-                {"role": "system", "content": REVIEW_INSTRUCTIONS},
-                {"role": "user", "content": evidence},
-            ]
+            active_context = context or ReviewContext(REVIEW_INSTRUCTIONS)
+            messages = active_context.messages(packet)
 
             response = await asyncio.wait_for(
                 model_call(messages),
@@ -90,6 +89,7 @@ def make_adversarial_provider(model_call=None):
             )
 
             report = ReviewReport.model_validate(response)
+            active_context.record(messages, report.model_dump(mode="json"))
 
             return ProviderResult(
                 status="ready",

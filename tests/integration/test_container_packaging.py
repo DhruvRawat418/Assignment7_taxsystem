@@ -9,7 +9,7 @@ def test_container_packages_gui_assets_and_persistent_browser_root():
     ignore = (ROOT/'.dockerignore').read_text()
     assert 'SILVERFILE_DATA_DIR=/app/state' in dockerfile
     assert 'USER silverfile' in dockerfile
-    for entry in ('!assets/dashboard.css', '!.streamlit/', '!.streamlit/config.toml'):
+    for entry in ('!assets/dashboard.css', '!.streamlit/', '!.streamlit/config.toml', '!.dockerignore', '!compose.yaml'):
         assert entry in ignore
     assert 'secrets.toml' in ignore
     assert 'case_data:/app/state' in (ROOT/'compose.yaml').read_text()
