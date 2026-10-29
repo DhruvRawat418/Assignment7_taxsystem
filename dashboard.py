@@ -342,6 +342,16 @@ def format_recorded_time(value):
         return value + " (unrecognized timestamp)"
 
 
+def format_correction_value(value, field=None):
+    if type(value) is bool:
+        return "Yes" if value else "No"
+    if value is None:
+        return "Not recorded"
+    if isinstance(value,list):
+        return ", ".join(Path(v).name if field == "w2_files" else str(v) for v in value) or "None"
+    return str(value)
+
+
 def load_correction_history(database, case_id):
     """Read staff corrections from the saved intake, excluding raw answers."""
     if not database.is_file():
@@ -358,16 +368,12 @@ def load_correction_history(database, case_id):
         if saved is None:
             raise ValueError("No saved intake interview was found for this case.")
         history = saved.checkpoint.get("channel_values", {}).get("answer_history", [])
-        def answer(value):
-            if type(value) is bool:
-                return "Yes" if value else "No"
-            return "Not recorded"
         return [{
             "Recorded at": format_recorded_time(entry.get("at")),
             "Staff": entry.get("staff", "Not recorded"),
             "Answer changed": FIELDS.get(entry.get("field"), entry.get("field", "Unknown")),
-            "Previous answer": answer(entry.get("old")),
-            "Corrected answer": answer(entry.get("new")),
+            "Previous answer": format_correction_value(entry.get("old"),entry.get("field")),
+            "Corrected answer": format_correction_value(entry.get("new"),entry.get("field")),
             "Reason": entry.get("reason", "Not recorded"),
         } for entry in history if isinstance(entry, dict) and "staff" in entry and "reason" in entry]
 
@@ -411,6 +417,12 @@ def submit_correction(database, case, field, new_value, staff, reason):
 
 
 async def stop_saved_case(database, case):
+    from src.integration.case_service import case_activity
+    with case_activity(database.parent,case['case_id']):
+        return await _stop_saved_case(database,case)
+
+
+async def _stop_saved_case(database, case):
     """Resume the existing human interrupt with the graph's stop decision."""
     from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
     from langgraph.types import Command
@@ -547,6 +559,10 @@ def main(database=None):
         st.divider()
         st.markdown('<div class="sf-sidebar-foot"><span aria-hidden="true">●</span> Local workspace<small>Tax year 2025 · Draft preparation</small></div>', unsafe_allow_html=True)
         st.caption("Local, single-operator workspace. Drafts require staff review before use.")
+    if st.session_state.get('_screen') == 'documents':
+        from src.integration.document_ui import render_documents
+        render_documents(database.parent)
+        return
     if st.session_state.get('_screen') == 'intake':
         render_intake(database.parent)
         return
@@ -605,6 +621,8 @@ def main(database=None):
     heading.subheader(case["case_id"])
     badge.markdown(status_badge_html(case["status"]), unsafe_allow_html=True)
     badge.caption(f"Revision {case['revision']}")
+    from src.integration.document_ui import document_actions
+    document_actions(case['case_id'],key_prefix='case')
     actions, evidence, history, tasks = st.tabs(["Review & actions", "Draft & evidence", "History", "Agent tasks"], key="case_detail_tabs")
     with actions:
         show_review_panel(database, case)

@@ -11,6 +11,10 @@
 
 **Submission status:** see [remaining requirements and owner actions](docs/SUBMISSION_CHECKLIST.md), [full clean demo](demo/eval_case_1.md), [full HITL demo](demo/eval_case_2.md), and [measured context experiment](docs/metrics.md).
 
+**Document management:** case/interview headers now include **Upload / replace W-2**
+and **Correct tax form types**. Staff corrections preserve history and require
+fresh reviews before PDF export. See [the editor guide](docs/DOCUMENT_EDITOR.md).
+
 **Complete browser workflow:** click **New case** to conduct the saved interview,
 upload a synthetic W-2, configure the session's model key and run checks without
 a terminal handoff. See [browser workflow and local OCR setup](docs/BROWSER_WORKFLOW.md).

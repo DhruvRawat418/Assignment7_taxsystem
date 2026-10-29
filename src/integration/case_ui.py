@@ -193,6 +193,8 @@ def render_intake(root):
         st.error(str(error))
         return
     st.subheader(active)
+    from src.integration.document_ui import document_actions
+    document_actions(active,key_prefix='interview')
     st.caption(f"{view['answer_count']} answers saved · You can leave and resume this case later.")
     notice = st.session_state.pop('_intake_notice', None)
     if notice and notice[0] == active:

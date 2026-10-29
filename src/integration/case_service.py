@@ -35,6 +35,20 @@ _ACTIVE_RUNS = set()
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 
 
+@contextmanager
+def case_activity(root,case_id):
+    """Reserve one case across asynchronous checks or staff mutations."""
+    key=(str(Path(root).resolve()),validate_case_id(case_id))
+    with _LOCK:
+        if key in _ACTIVE_RUNS:
+            raise ValueError('A case update or checks are already running. Refresh before trying again.')
+        _ACTIVE_RUNS.add(key)
+    try:
+        yield
+    finally:
+        with _LOCK:_ACTIVE_RUNS.discard(key)
+
+
 def validate_case_id(case_id):
     if (not isinstance(case_id, str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,80}', case_id)
             or scan_ssns(case_id).real_ssn_found or scan_ssns(case_id).test_ssns):
@@ -70,6 +84,10 @@ class CaseService:
     def _config(case_id):
         return {'configurable': {'thread_id': validate_case_id(case_id)}}
 
+    def _ensure_idle(self,case_id):
+        if (str(self.root),validate_case_id(case_id)) in _ACTIVE_RUNS:
+            raise ValueError('A case update or checks are already running. Refresh before trying again.')
+
     def workflow_state(self, case_id):
         if not self.workflow_db.is_file():
             return {}
@@ -79,6 +97,7 @@ class CaseService:
     def create(self, case_id):
         config = self._config(case_id)
         with _LOCK, self._interview() as graph:
+            self._ensure_idle(case_id)
             if graph.get_state(config).values or self.workflow_state(case_id):
                 raise ValueError('This case ID already exists. Resume the saved interview or choose a new ID.')
             graph.invoke(initial_intake_state(), config)
@@ -126,6 +145,7 @@ class CaseService:
     def continue_remaining(self, case_id, token):
         """Explicitly resume a pre-extension interview, preserving its answers."""
         with _LOCK, self._interview() as graph:
+            self._ensure_idle(case_id)
             snap = graph.get_state(self._config(case_id))
             if (not snap.values or snap.config['configurable']['checkpoint_id'] != token
                     or _pending(snap) or self.workflow_state(case_id)
@@ -144,7 +164,10 @@ class CaseService:
             raise ValueError('This interview is not waiting for a taxpayer answer.')
         if field and pending[0].get('field') != field:
             raise ValueError('This action does not match the current question.')
-        if self.workflow_state(case_id):
+        workflow = self.workflow_state(case_id)
+        document_questions = (workflow.get('status') == 'needs_input' and workflow.get('issues') ==
+            [{'code': 'document_answers_required', 'owner': 'intake'}])
+        if workflow and not document_questions:
             raise ValueError('The case has already entered workflow review. Use its supported review actions.')
         return snapshot
 
@@ -152,6 +175,7 @@ class CaseService:
         if not isinstance(reply, str) or not reply.strip() or len(reply) > 4000:
             raise ValueError('Enter an answer of at most 4,000 characters.')
         with _LOCK, self._interview() as graph:
+            self._ensure_idle(case_id)
             snapshot = self._checked_snapshot(graph, case_id, token)
             field = _pending(snapshot)[0]['field']
             if field == 'w2_files':
@@ -218,6 +242,7 @@ class CaseService:
     def upload_w2(self, case_id, token, files):
         decoded = self._prepare_images(files)
         with _LOCK, self._interview() as graph:
+            self._ensure_idle(case_id)
             self._checked_snapshot(graph, case_id, token, 'w2_files')
             paths = self._save_images(case_id, decoded)
             graph.invoke(Command(resume={'uploaded_w2_paths':paths}), self._config(case_id))
@@ -225,6 +250,7 @@ class CaseService:
 
     def reopen_uncertain(self, case_id, token, field):
         with _LOCK, self._interview() as graph:
+            self._ensure_idle(case_id)
             snap=graph.get_state(self._config(case_id))
             record=snap.values.get('answers',{}).get(field)
             if (not snap.values or snap.config['configurable']['checkpoint_id']!=token
@@ -239,6 +265,7 @@ class CaseService:
     def resolve_intake(self, case_id, token, *, staff, reason, stop=True):
         staff, reason = validate_staff_metadata(staff, reason)
         with _LOCK, self._interview() as graph:
+            self._ensure_idle(case_id)
             snapshot = graph.get_state(self._config(case_id))
             if not snapshot.values or snapshot.config['configurable']['checkpoint_id'] != token:
                 raise ValueError('The interview changed. Refresh before resolving it.')
@@ -254,6 +281,7 @@ class CaseService:
         decoded = self._prepare_images(files)
         staff, reason = validate_staff_metadata(staff, reason)
         with _LOCK, self._interview() as graph:
+            self._ensure_idle(case_id)
             snapshot = graph.get_state(self._config(case_id))
             if not snapshot.values or snapshot.config['configurable']['checkpoint_id'] != token:
                 raise ValueError('The interview changed. Refresh before replacing documents.')
@@ -265,22 +293,15 @@ class CaseService:
             old = snapshot.values['answers'].get('w2_files')
             if not old: raise ValueError('This case did not supply W-2 documents.')
             paths = self._save_images(case_id, decoded)
-            record = provenance(paths, 'Uploaded replacement synthetic documents', 'Kushim staff: '+staff.strip())
+            record = provenance(paths, 'Uploaded replacement synthetic documents', 'SilverFile staff: '+staff.strip())
             graph.update_state(self._config(case_id), dict(answers={'w2_files':record},
                 answer_history=[dict(field='w2_files',previous_record=deepcopy(old),staff=staff.strip(),
                                      reason=reason.strip(),at=record['entered_at'])]), as_node='intake')
         return self.view(case_id)
 
-    async def run_checks(self, case_id, model_call):
-        self._config(case_id)
-        key = (str(self.root), case_id)
-        with _LOCK:
-            if key in _ACTIVE_RUNS: raise ValueError('Checks are already running. Refresh the case to see progress.')
-            _ACTIVE_RUNS.add(key)
-        try:
-            return await self._run_checks(case_id, model_call)
-        finally:
-            with _LOCK: _ACTIVE_RUNS.discard(key)
+    async def run_checks(self,case_id,model_call):
+        with case_activity(self.root,case_id):
+            return await self._run_checks(case_id,model_call)
 
     async def _run_checks(self, case_id, model_call):
         if model_call is None:

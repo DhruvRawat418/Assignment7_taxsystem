@@ -4,6 +4,14 @@ The dashboard now includes Intake and workflow handoff. After launching the app,
 staff do not need a terminal to create a case, answer questions, attach a W-2,
 run checks, handle supported reviews or export the saved draft.
 
+## Visible upload and staff document correction
+
+Use **Upload / replace W-2** or **Correct tax form types** above the selected case
+or active interview. Save attributed changes, answer any missing document
+questions, then explicitly rerun checks. Reviewed cases can replace files too;
+old approvals/PDF controls are revoked until new reviews pass.
+See [Document editor](DOCUMENT_EDITOR.md).
+
 ## Using the GUI
 
 1. Click **New case** in the sidebar. Keep the generated reference or enter a

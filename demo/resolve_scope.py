@@ -20,6 +20,12 @@ from src.integration.graph import build_graph
 
 
 async def resolve_scope(root, case_id, field, expected_old, new_value, staff, reason, workers):
+    from src.integration.case_service import case_activity
+    with case_activity(root,case_id):
+        return await _resolve_scope(root,case_id,field,expected_old,new_value,staff,reason,workers)
+
+
+async def _resolve_scope(root, case_id, field, expected_old, new_value, staff, reason, workers):
     """workers supplies real agents in the CLI, explicit doubles in tests."""
     root = Path(root)
     intake_db = root / "intake_sessions.db"
