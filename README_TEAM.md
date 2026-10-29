@@ -17,6 +17,8 @@ Use this guide for the integrated app. The older README includes historical comp
 
 This is a local class-project draft-preparation system. It runs intake and a LangGraph agent workflow, exposes a Streamlit staff dashboard, and exports a reviewed 2025 Form 1040-SR draft plus its audit record. Nothing is filed.
 
+For a packaged Python/OCR/MCP environment, follow [Run with Docker](docs/DOCKER.md). The Docker setup uses the same application and preserves both databases across container recreation.
+
 ## 1. Download the integration branch
 
 Use the browser-extension branch for the complete browser flow. Dhruv's original integration remains its base:

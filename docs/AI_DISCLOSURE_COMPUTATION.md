@@ -10,3 +10,11 @@ were executed against a real local MCP subprocess and a LangGraph invocation;
 no model API is used by the implemented Computation module. This disclosure
 covers this contribution only. Team members must review the generated code and
 record any further AI use in the final assignment disclosure.
+
+For the Docker/DevOps contribution, Codex also inspected the integrated app's
+startup commands, dependency manifests, SQLite paths, and local MCP process. It
+helped write the Dockerfile, full Linux dependency lock, Compose configuration,
+offline CI workflow, and startup instructions. Packaging checks are run in the
+GitHub Codespace using synthetic fixtures; live OpenAI review is not part of
+those offline checks. Existing teammate agents and tax-calculation logic are
+preserved by this packaging change.
