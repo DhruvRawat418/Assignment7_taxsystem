@@ -81,3 +81,16 @@ def test_reviewed_case_can_replace_w2_and_revoke_cached_pdf(tmp_path):
  assert len(a.get('download_button'))==0 and 'pdf_export' not in a.session_state
  assert s.workflow_state('replace-ui')['status']=='needs_input'
  assert __import__('pathlib').Path(old_path).is_file()
+
+
+def test_workspace_document_controls_precede_summary_and_execution_details_are_collapsed(tmp_path):
+ s=CaseService(tmp_path);complete(s,'visible-top')
+ a=app_for(tmp_path)
+ nodes=list(a.main)
+ upload=next(i for i,n in enumerate(nodes) if getattr(n,'type',None)=='button' and getattr(n,'label',None)=='Upload / replace W-2')
+ summary=next(i for i,n in enumerate(nodes) if getattr(n,'type',None)=='metric')
+ assert upload<summary, 'Document controls must be above summaries and case queues.'
+ a.session_state['action_result']=('visible-top',{'status':'paused_for_human_review','issues':[]})
+ a.run(timeout=30)
+ details=next(e for e in a.expander if e.label=='Execution details')
+ assert not details.proto.expanded

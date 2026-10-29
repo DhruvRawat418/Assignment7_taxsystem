@@ -3,6 +3,9 @@
 The selected-case header and active interview now show two prominent controls:
 **Upload / replace W-2** and **Correct tax form types**. They open the same editor,
 so users do not need to wait for a hidden conditional upload question.
+In Case workspace, the case selector and document buttons appear before summary
+cards and the attention queue. Execution JSON is collapsed under Execution details
+so it cannot push the document controls far down the page.
 
 ## Use the editor
 

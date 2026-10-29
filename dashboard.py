@@ -577,7 +577,8 @@ def main(database=None):
             st.success(f"{case_id}: stopped. The saved case and its issues have been retained.")
         else:
             st.warning(f"{case_id}: {result['status']}. Review the result below before taking another action.")
-            st.json(result)
+            with st.expander("Execution details", expanded=False):
+                st.json(result)
     try:
         cases = load_cases(database)
         cases += interview_rows(database.parent,cases)
@@ -587,29 +588,10 @@ def main(database=None):
     if not cases:
         st.info("No saved workflow cases yet. Run an intake handoff, then refresh this page.")
         return
-    columns = st.columns(4)
-    summaries = [
-        ("saved", "Saved cases", len(cases), "All saved records"),
-        ("attention", "Needs attention", sum(c["status"] in ATTENTION_STATUSES for c in cases), "Staff follow-up needed"),
-        ("ready", "Drafts ready", sum(c["status"] == "ready_for_human_review" for c in cases), "Prepared for staff review"),
-        ("progress", "In progress", sum(c["status"] == "running" for c in cases), "Active workflows"),
-    ]
-    for column, (key, label, value, caption) in zip(columns, summaries):
-        with column, st.container(key="summary_" + key):
-            st.metric(label, value)
-            st.caption(caption)
-    st.write("")
     visible = filter_cases(cases, query, selected_status)
     if not visible:
         st.info("No cases match these filters. Change the search or status to see more cases.")
         return
-    show_attention_queue(visible)
-    st.subheader("Case register")
-    st.caption(f"Showing {len(visible)} of {len(cases)} saved cases. Draft ready means prepared for staff review; it does not mean filed.")
-    st.dataframe([{
-        "Case": c["case_id"], "Status": status_label(c["status"]), "Revision": c["revision"],
-        "Review items": len(c["issues"]),
-    } for c in visible], hide_index=True, width="stretch")
     ids = [c["case_id"] for c in visible]
     if st.session_state.get("open_case_id") not in ids:
         st.session_state["open_case_id"] = next((c["case_id"] for c in visible
@@ -623,6 +605,26 @@ def main(database=None):
     badge.caption(f"Revision {case['revision']}")
     from src.integration.document_ui import document_actions
     document_actions(case['case_id'],key_prefix='case')
+    st.divider()
+    columns = st.columns(4)
+    summaries = [
+        ("saved", "Saved cases", len(cases), "All saved records"),
+        ("attention", "Needs attention", sum(c["status"] in ATTENTION_STATUSES for c in cases), "Staff follow-up needed"),
+        ("ready", "Drafts ready", sum(c["status"] == "ready_for_human_review" for c in cases), "Prepared for staff review"),
+        ("progress", "In progress", sum(c["status"] == "running" for c in cases), "Active workflows"),
+    ]
+    for column, (key, label, value, caption) in zip(columns, summaries):
+        with column, st.container(key="summary_" + key):
+            st.metric(label, value)
+            st.caption(caption)
+    st.write("")
+    show_attention_queue(visible)
+    st.subheader("Case register")
+    st.caption(f"Showing {len(visible)} of {len(cases)} saved cases. Draft ready means prepared for staff review; it does not mean filed.")
+    st.dataframe([{
+        "Case": c["case_id"], "Status": status_label(c["status"]), "Revision": c["revision"],
+        "Review items": len(c["issues"]),
+    } for c in visible], hide_index=True, width="stretch")
     actions, evidence, history, tasks = st.tabs(["Review & actions", "Draft & evidence", "History", "Agent tasks"], key="case_detail_tabs")
     with actions:
         show_review_panel(database, case)
