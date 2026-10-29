@@ -60,6 +60,8 @@ def make_adversarial_provider(model_call=None, *, context=None):
             )
         }
 
+        packet['dependent_details'] = (state.get('intake_snapshot') or {}).get('facts', {}).get('dependents', state.get('dependent_details', []))
+
         if (
             not isinstance(packet["computation_result"], dict)
             or packet["computation_result"].get("status") != "completed"

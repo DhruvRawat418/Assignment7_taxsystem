@@ -20,7 +20,7 @@ def complete(s, case_id, *, w2=False, itemize=False):
         has_dependents='no',has_self_employment_income='no',has_rental_income='no',has_capital_gains='no',
         has_foreign_income_or_accounts='no',taxpayer_can_be_claimed_as_dependent='no',
         wants_to_itemize='yes' if itemize else 'no',needs_state_return='no',
-        documents='W-2' if w2 else 'SSA-1099',ssa1099_box5='24000',ssa1099_box6='none',has_estimated_payments='no',has_direct_schedule_amounts='no')
+        documents='W-2' if w2 else 'SSA-1099',ssa1099_box5='24000',ssa1099_box6='none',has_estimated_payments='no',has_direct_schedule_amounts='no',has_digital_assets='no',is_amended_or_prior_year='no',taxpayer_dual_status_alien='no',separate_spouse_itemizes='no')
     for _ in range(35):
         if view['status']=='ready_for_checks':return view
         if view['pending']['field']=='w2_files':return view
@@ -150,7 +150,7 @@ def test_uncertain_answer_can_be_revisited_without_losing_other_answers(tmp_path
     answers=dict(taxpayer_birth_date='March 5, 1955',taxpayer_blind='no',has_dependents='no',
         has_self_employment_income='no',has_rental_income='no',has_capital_gains='no',has_foreign_income_or_accounts='no',
         taxpayer_can_be_claimed_as_dependent='no',wants_to_itemize='no',needs_state_return='no',
-        documents='SSA-1099',ssa1099_box5='24000',ssa1099_box6='none',has_estimated_payments='no',has_direct_schedule_amounts='no')
+        documents='SSA-1099',ssa1099_box5='24000',ssa1099_box6='none',has_estimated_payments='no',has_direct_schedule_amounts='no',has_digital_assets='no',is_amended_or_prior_year='no',taxpayer_dual_status_alien='no',separate_spouse_itemizes='no')
     for _ in range(30):
         if not v['pending']:break
         v=s.answer('uncertain',v['token'],answers[v['pending']['field']])

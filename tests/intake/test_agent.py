@@ -13,7 +13,7 @@ from src.agents.intake import (
 from src.agents.intake_parser import FieldCorrection, ParsedTurn, RuleParser
 
 P = RuleParser()
-NO_SCOPE = ["no"] * 7  # business, rental, sales, abroad, dependent, itemize, state return
+NO_SCOPE = ["no"] * 11  # business, rental, sales, abroad, dependent, itemize, state return
 
 
 def apply(state, upd):
@@ -43,7 +43,7 @@ def test_real_ssn_is_blocked_redacted_and_never_stored():
 
 def test_test_ssn_accepted_for_dependent():
     s = initial_intake_state()
-    for r in ["single", "March 5, 1955", "no", "yes", "Lily Park", "granddaughter", "901-23-4567"]:
+    for r in ["single", "March 5, 1955", "no", "yes", "Lily", "Park", "granddaughter", "901-23-4567"]:
         s = answer(s, r)
     assert s["dependents"][0]["ssn"]["value"] == "901-23-4567"
     assert next_field(s) == "more_dependents"
@@ -58,7 +58,7 @@ def test_volunteered_test_ssn_is_not_stored():
 
 def test_dependent_ssn_must_be_900_series():
     s = initial_intake_state()
-    for r in ["single", "March 5, 1955", "no", "yes", "Lily Park", "granddaughter", "523-45-6789"]:
+    for r in ["single", "March 5, 1955", "no", "yes", "Lily", "Park", "granddaughter", "523-45-6789"]:
         s = answer(s, r)
     assert next_field(s) == "dependent_ssn" and not s["dependents"]
 

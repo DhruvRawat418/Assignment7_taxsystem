@@ -209,7 +209,7 @@ def render_intake(root):
     elif view['status'] == 'intake_needs_review':
         _intake_review(service, view)
     elif view['status'] == 'interview_update_required':
-        st.info('This saved interview needs the additional schedule and payment questions before checks can start. Earlier answers are kept.')
+        st.info('This saved interview needs the additional scope, schedule and payment questions before checks can start. Earlier answers are kept.')
         if st.button('Complete remaining questions', type='primary'):
             try:
                 service.continue_remaining(active, view['token'])

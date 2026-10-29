@@ -15,6 +15,7 @@ the two contracts fails here rather than inside the computation node.
 from __future__ import annotations
 
 from datetime import date
+from src.agents.dependent_contract import DependentDetails
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, model_validator
@@ -56,6 +57,7 @@ class IntakeFacts(ContractModel):
     can collect facts other agents need without breaking this boundary.
     """
 
+    dependents: list[DependentDetails] = Field(default_factory=list)
     filing_status: FilingStatus
     taxpayer_date_of_birth: date
     taxpayer_blind: StrictBool

@@ -32,7 +32,7 @@ def interview():
     config = {"configurable": {"thread_id": "team-interview"}}
     state = graph.invoke(initial_intake_state(), config)
     # Synthetic replies, delivered through the real Intake interrupt/resume node.
-    replies = ["single", "March 5, 1955", "no", "no", *(["no"] * 7),
+    replies = ["single", "March 5, 1955", "no", "no", *(["no"] * 11),
                "W-2 and SSA-1099", "demo/w2_clean.jpg", "$24,000", "none", "no", "no"]
     for reply in replies:
         assert state["__interrupt__"], "Interview ended before all supplied answers"

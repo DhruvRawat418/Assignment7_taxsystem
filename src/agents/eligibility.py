@@ -315,6 +315,10 @@ def eligibility(state, llm=None):
                               data={"detail": "Intake facts did not validate"})
 
     blockers = []
+    if len(facts.dependents) > 4:
+        blockers.append(Blocker('dependent_attachment_required', 'More than four dependents require an attachment', 'DEP-02'))
+    if len({dep.ssn for dep in facts.dependents}) != len(facts.dependents):
+        blockers.append(Blocker('duplicate_dependent', 'Dependent SSNs must identify distinct people', 'DEP-01'))
     for check in (check_filing_status, check_sr_eligibility, check_deduction_chart,
                   check_separate_return_spouse_boxes, check_intake_scope):
         blockers.extend(check(facts))
@@ -333,7 +337,7 @@ def eligibility(state, llm=None):
     try:
         output = RulesOutput(
             profile=profile_from_facts(facts, mfs_spouse_allowance_approved=False),
-            clearance=RulesClearance(approved=True, citations=list(cite(*BASE_CITATIONS)),
+            clearance=RulesClearance(approved=True, citations=list(cite(*BASE_CITATIONS, "DEP-01")),
                                      blocking_conditions=[]),
             box_dispositions=dispositions,
         )

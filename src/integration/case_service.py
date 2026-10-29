@@ -99,7 +99,7 @@ class CaseService:
             status = 'intake_stopped'
         elif state.get('intake_complete'):
             status = 'intake_needs_review' if uncertain else 'ready_for_checks'
-            if not uncertain and not_ready_reason(state) == 'intake_missing_direct_amounts' and not self.workflow_state(case_id):
+            if not uncertain and not_ready_reason(state) in ('intake_missing_direct_amounts', 'intake_missing_scope_answers') and not self.workflow_state(case_id):
                 status = 'interview_update_required'
         else:
             status = 'interview_in_progress'
@@ -129,7 +129,7 @@ class CaseService:
             snap = graph.get_state(self._config(case_id))
             if (not snap.values or snap.config['configurable']['checkpoint_id'] != token
                     or _pending(snap) or self.workflow_state(case_id)
-                    or not_ready_reason(snap.values) != 'intake_missing_direct_amounts'):
+                    or not_ready_reason(snap.values) not in ('intake_missing_direct_amounts', 'intake_missing_scope_answers')):
                 raise ValueError('Only an unchanged interview with missing questions can continue here.')
             graph.update_state(self._config(case_id), {'intake_complete': False}, as_node='intake')
             graph.invoke(None, self._config(case_id))

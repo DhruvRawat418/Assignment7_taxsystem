@@ -1,3 +1,24 @@
+## Update — dependent transcription and explicit scope questions
+
+Implemented dependent first/last names, synthetic SSNs and relationships through
+Intake, Rules, reviewer evidence and PDF/audit JSON. Added four explicit scope
+questions and blocked incomplete scope handoffs. See
+[DEPENDENT_SCOPE_VERIFICATION.md](DEPENDENT_SCOPE_VERIFICATION.md) for behavior,
+legacy-case handling and the remaining live acceptance check. Earlier dependent
+and missing-question gap statements below describe the prior revision.
+
+Verification: Docker full suite 400 passed, 12 optional skips, 37 subtests;
+optional computation probes 11 passed and task-division probe 1 passed separately.
+A subsequent four-dependent rendering regression also passed locally (9 new
+scope/dependent tests total). Page 1 visually checked with populated dependent
+fields and nine-digit practice SSN. All external reviewers in these new tests are
+labelled fakes; a new live dependent-case acceptance run remains for the key owner.
+No source branches were pushed and main is unchanged.
+
+## Update — live context experiment completed
+
+The ten-distinct-document comparison completed with 20 actual OpenAI review requests. See [metrics.md](metrics.md) and its linked raw JSON for provider-reported usage and limitations. Earlier pending-live-metrics statements below are historical. Dependent/scope coverage, final Docker revalidation after subsequent code changes, report and demo remain open.
+
 # Integrated release verification — October 29, 2026
 
 This is the local candidate `dhruv/submission-integration` in `silverfile-publish`.

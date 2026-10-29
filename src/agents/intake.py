@@ -80,7 +80,8 @@ QUESTIONS = {
     "spouse_blind": "Is your spouse legally blind?",
     "mfs_lived_with_spouse": f"Did you live with your spouse at any time in {TAX_YEAR}?",
     "has_dependents": "Is there anyone you support who you want to list on your return, like a child or grandchild?",
-    "dependent_name": "What is this person's full name?",
+    "dependent_first_name": "What is this person's first name and middle initial, if any?",
+    "dependent_last_name": "What is this person's last name?",
     "dependent_relationship": "How is this person related to you?",
     "dependent_ssn": "What is this person's Social Security number? In this practice system it must start with 9.",
     "more_dependents": "Is there anyone else you want to list?",
@@ -170,9 +171,17 @@ LABELS = {
     "has_direct_schedule_amounts": "Other schedule or payment amounts to enter",
     **{field: question.rstrip("?") for field, question in DIRECT_AMOUNT_QUESTIONS.items()},
 }
+EXTRA_SCOPE_QUESTIONS = {
+    "has_digital_assets": "During 2025, did you receive, sell, exchange, or otherwise dispose of digital assets, such as cryptocurrency?",
+    "is_amended_or_prior_year": "Are you amending a return or preparing a return for a year other than 2025?",
+    "taxpayer_dual_status_alien": "Were you a dual-status alien for U.S. tax purposes in 2025? You can say you are not sure.",
+    "separate_spouse_itemizes": "If you are married filing separately, does your spouse itemize deductions? Answer no if this does not apply.",
+}
+QUESTIONS.update(EXTRA_SCOPE_QUESTIONS)
+LABELS.update({key: question for key, question in EXTRA_SCOPE_QUESTIONS.items()})
 SCOPE_FIELDS = ["has_self_employment_income", "has_rental_income", "has_capital_gains",
                 "has_foreign_income_or_accounts", "taxpayer_can_be_claimed_as_dependent",
-                "wants_to_itemize", "needs_state_return"]
+                "wants_to_itemize", "needs_state_return", *EXTRA_SCOPE_QUESTIONS]
 for _form, _items in FORM_QUESTIONS.items():
     for _field, _question, _label in _items:
         QUESTIONS[_field] = _question if _field in ("r_is_ira", "r_box2b") else _question + FORM_QUESTIONS_NOTE
@@ -196,7 +205,7 @@ FIELD_KIND = {
     "taxpayer_blind": "yes_no", "spouse_blind": "yes_no", "has_dependents": "yes_no",
     "more_dependents": "yes_no", "has_estimated_payments": "yes_no",
     "estimated_payments_total": "amount", "documents": "documents",
-    "dependent_name": "text", "dependent_relationship": "text", "dependent_ssn": "ssn",
+    "dependent_first_name": "text", "dependent_last_name": "text", "dependent_relationship": "text", "dependent_ssn": "ssn",
     "mfs_lived_with_spouse": "yes_no", "w2_files": "files",
     "has_direct_schedule_amounts": "yes_no",
     **{field: "amount" for field in DIRECT_AMOUNT_LINES},
@@ -259,7 +268,7 @@ def next_field(state: dict) -> str | None:
         draft = state.get("dep_draft")
         if draft is None:
             return "more_dependents"
-        for k in ["name", "relationship", "ssn"]:
+        for k in ["first_name", "last_name", "relationship", "ssn"]:
             if k not in draft:
                 return f"dependent_{k}"
     for f in SCOPE_FIELDS + ["documents"]:
@@ -307,7 +316,7 @@ def summarize(state: dict) -> str:
             lines.append(f"- {LABELS[f]}: {v}")
     for d in state.get("dependents", []):
         ssn = mask_ssn(d["ssn"]["value"]) if d.get("ssn", {}).get("value") else "not given"
-        lines.append(f"- Listed person: {d['name']['value']} ({d['relationship']['value']}), SSN {ssn}")
+        lines.append(f"- Listed person: {d.get('first_name', d.get('name', {})).get('value', '')} {d.get('last_name', {}).get('value', '')} ({d['relationship']['value']}), SSN {ssn}")
     return "\n".join(lines)
 
 
@@ -462,6 +471,11 @@ def handle_reply(state: dict, field: str, reply: str, parser: Parser) -> dict:
     # 6. Go back / unsure.
     if parsed.intent == "go_back":
         return {**upd, **_go_back(state)}
+    if parsed.intent == "unsure" and field.startswith("dependent_"):
+        upd["hitl_requests"] = [hitl("dependent_details_uncertain", "Dependent details need confirmation before transcription.", field)]
+        upd["intake_paused"] = True
+        upd["preface"] = "A volunteer needs to confirm this detail with you before we continue."
+        return upd
     if parsed.intent == "unsure":
         upd.update(_store(state, field, None, text, who, status="unsure"))
         upd["volunteer_notes"] = [*upd.get("volunteer_notes", []), note(f"Not sure about: {question}", field, "unsure")]

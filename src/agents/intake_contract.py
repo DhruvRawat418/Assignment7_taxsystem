@@ -12,6 +12,7 @@ expects and say where it came from.
 """
 from __future__ import annotations
 
+from src.agents.dependent_contract import DependentDetails
 import hashlib
 import sqlite3
 
@@ -148,15 +149,17 @@ def _facts(session: dict) -> dict:
             free_text.append(f"The taxpayer listed a form this system does not handle: {form}")
     if _answered(answers, "r_box2b"):
         free_text.append("1099-R box 2b (taxable amount not determined) is checked")
-    if session.get("dependents"):
-        free_text.append(f"The taxpayer listed {len(session['dependents'])} dependent(s); "
-                         "dependent credits are not handled")
+    facts["dependents"] = [DependentDetails.model_validate({
+        **{key: dep[key]["value"] for key in ("first_name", "last_name", "ssn", "relationship")},
+        "sources": {key: _source("dependent_" + key, dep[key])
+                    for key in ("first_name", "last_name", "ssn", "relationship")},
+    }).model_dump() for dep in session.get("dependents", [])]
     facts["free_text_notes"] = free_text[:64]
     return facts
 
 
 def to_packet(session: dict) -> dict:
-    """The `data` of a ready ProviderResult. Dependents' SSNs are deliberately left out."""
+    """The `data` of a ready ProviderResult. Only synthetic dependent SSNs are accepted."""
     answers = session["answers"]
     return {"facts": _facts(session), "amounts": _amounts(answers), "documents": _documents(answers)}
 
@@ -170,6 +173,21 @@ def not_ready_reason(session: dict | None) -> str | None:
         return "intake_not_finished"
     if any(rec["status"] == "unsure" for f, rec in session["answers"].items() if f in MUST_KNOW):
         return "intake_unsure_answer"
+    if any(field not in session['answers'] for field in SCOPE_FIELDS):
+        return 'intake_missing_scope_answers'
+    if any(session['answers'][field].get('status') != 'answered' for field in SCOPE_FIELDS):
+        return 'intake_unsure_answer'
+    for dep in session.get('dependents', []):
+        if any(dep.get(key, {}).get('status') != 'answered'
+               for key in ('first_name', 'last_name', 'ssn', 'relationship')):
+            return 'intake_missing_dependent_details'
+        try:
+            DependentDetails.model_validate({
+                **{key: dep[key]['value'] for key in ('first_name', 'last_name', 'ssn', 'relationship')},
+                'sources': {},
+            })
+        except ValueError:
+            return 'intake_invalid_dependent_details'
     if reason := _direct_amounts_reason(session["answers"]):
         return reason
     return None

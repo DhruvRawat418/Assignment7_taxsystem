@@ -23,6 +23,10 @@ class UnknownRuleError(KeyError):
 
 
 _RULES = (
+    Rule("DEP-01", "Dependent transcription",
+         "Dependent names, synthetic SSNs and relationships are transcribed from intake. Other values, including credits, are direct sourced inputs; do not infer credits from a name or relationship.", "Assignment brief 3.1"),
+    Rule("DEP-02", "Dependent attachment review",
+         "The supplied 2025 template has four dependent columns. More than four requires staff handling of an attachment; do not truncate the list.", "2025 Form 1040-SR page 1 dependent section"),
     Rule("SR-ELIG-01", "1040-SR age eligibility",
          "For tax year 2025 the taxpayer must have been born before 2 January 1961 to file on "
          "Form 1040-SR.", "Assignment brief 3.2(1)"),

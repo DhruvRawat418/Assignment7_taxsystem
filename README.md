@@ -1,6 +1,8 @@
 # SilverFile — browser workflow and staff review
 
-Use branch **`dhruv/submission-integration`** for this browser extension. The shared
+**Start here: [Docker quick start for teammates and graders](docs/DOCKER_QUICKSTART.md).**
+
+Use branch **`dhruv/submission-integration`** until its integration PR is merged into main. The shared
 `main` branch may not yet contain the integrated app. Start with
 [README_TEAM.md](README_TEAM.md) for setup and [BROWSER_WORKFLOW.md](docs/BROWSER_WORKFLOW.md)
 for browser steps. The original agents remain credited to their team authors.
@@ -13,8 +15,7 @@ Nothing is filed; unresolved or stale cases cannot export.
 **Submission is still in progress.** See [remaining requirements](docs/SUBMISSION_CHECKLIST.md),
 [clean demo](demo/eval_case_1.md), [HITL demo](demo/eval_case_2.md),
 [context measurement](docs/metrics.md), and [Docker instructions](docs/DOCKER.md).
-The context table is local tokenizer evidence, not a completed live API experiment.
-Identity/dependent-success coverage and remaining scope defaults still need team work.
+The live ten-document experiment is recorded in docs/metrics.md. Dependent transcription and four explicit scope questions are implemented. Taxpayer identity/address fields remain uncollected; final report, role table and demo recording remain team deliverables.
 
 ## Integrated team contributions
 

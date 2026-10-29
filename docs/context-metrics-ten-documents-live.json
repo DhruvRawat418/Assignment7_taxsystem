@@ -1,0 +1,233 @@
+{
+  "mode": "live_api",
+  "tokenizer": "tiktoken 0.12.0 / o200k_base",
+  "method": "Sum of actual message content tokens; excludes roles/framing, response schema and provider overhead.",
+  "workload": "Ten distinct synthetic W-2 variants, independently processed through OCR/Rules/MCP/Audit, reviewed sequentially in identical order in both modes. One fictional taxpayer; not a combined ten-document return or accuracy benchmark.",
+  "packet_origin": "Actual W-2 OCR, Rules, MCP and deterministic Audit; explicit fake reviewer only during packet capture.",
+  "fixtures": [
+    {
+      "document": 1,
+      "filename": "w2-01.jpg",
+      "sha256": "a5fb9c43534cd4b216b4e1ceebfc38ab7aff458b8d9f765c6d00341b5aee19bf",
+      "expected_box_1": "38750.25",
+      "expected_box_2": "3125.00"
+    },
+    {
+      "document": 2,
+      "filename": "w2-02.jpg",
+      "sha256": "85a3918c45ba70454797f6cc7867bddcea8d4100915938e7ddb484ca8d7cb18c",
+      "expected_box_1": "38750.25",
+      "expected_box_2": "3250.00"
+    },
+    {
+      "document": 3,
+      "filename": "w2-03.jpg",
+      "sha256": "7da5c4bb08787416e12d6024f27abcb6789a525745e76ad4120462d45b107f5f",
+      "expected_box_1": "38750.25",
+      "expected_box_2": "3375.00"
+    },
+    {
+      "document": 4,
+      "filename": "w2-04.jpg",
+      "sha256": "4ea13230687c94530de23e934058cb7aaf41f0712f7d056a75562c7cb0917fea",
+      "expected_box_1": "38750.25",
+      "expected_box_2": "3500.00"
+    },
+    {
+      "document": 5,
+      "filename": "w2-05.jpg",
+      "sha256": "deb8e1239bc615edf266e0af2c8947daca50070a97170be1b9b55e71d8751064",
+      "expected_box_1": "38750.25",
+      "expected_box_2": "3625.00"
+    },
+    {
+      "document": 6,
+      "filename": "w2-06.jpg",
+      "sha256": "164aa99159fbb06dd30fb0e07430e60e842a78c8575dab1430b7c08e0cffa4e8",
+      "expected_box_1": "38750.25",
+      "expected_box_2": "3750.00"
+    },
+    {
+      "document": 7,
+      "filename": "w2-07.jpg",
+      "sha256": "ff1e37f4f7751f3aa39a4afb5d4902d29bf1b10eb6ec493d77191c47c7cb5e3e",
+      "expected_box_1": "38750.25",
+      "expected_box_2": "3875.00"
+    },
+    {
+      "document": 8,
+      "filename": "w2-08.jpg",
+      "sha256": "a8956ead77b8b543dc8a05eff20eafa96ba7e0813f8cc17ff00c4688ae29fd4d",
+      "expected_box_1": "38750.25",
+      "expected_box_2": "4000.00"
+    },
+    {
+      "document": 9,
+      "filename": "w2-09.jpg",
+      "sha256": "7e1a938eb4f99a3a5b89e4989116de2839fe018e21afb0c3ee1223f7abdae1a3",
+      "expected_box_1": "38750.25",
+      "expected_box_2": "4125.00"
+    },
+    {
+      "document": 10,
+      "filename": "w2-10.jpg",
+      "sha256": "de6621c139344d869134f89b0b7208f17e889115f1d6245a963a57ca1572bb81",
+      "expected_box_1": "38750.25",
+      "expected_box_2": "4250.00"
+    }
+  ],
+  "model": "gpt-4.1-mini",
+  "live_api_calls": 20,
+  "runs": [
+    {
+      "strategy": "disabled_full_history",
+      "rows": [
+        {
+          "document": 1,
+          "local_content_tokens": 28974,
+          "provider_input_tokens": 29169,
+          "provider_output_tokens": 7,
+          "finding_count": 0
+        },
+        {
+          "document": 2,
+          "local_content_tokens": 57741,
+          "provider_input_tokens": 57944,
+          "provider_output_tokens": 7,
+          "finding_count": 0
+        },
+        {
+          "document": 3,
+          "local_content_tokens": 86546,
+          "provider_input_tokens": 86757,
+          "provider_output_tokens": 7,
+          "finding_count": 0
+        },
+        {
+          "document": 4,
+          "local_content_tokens": 115319,
+          "provider_input_tokens": 115538,
+          "provider_output_tokens": 7,
+          "finding_count": 0
+        },
+        {
+          "document": 5,
+          "local_content_tokens": 144024,
+          "provider_input_tokens": 144251,
+          "provider_output_tokens": 7,
+          "finding_count": 0
+        },
+        {
+          "document": 6,
+          "local_content_tokens": 172789,
+          "provider_input_tokens": 173024,
+          "provider_output_tokens": 7,
+          "finding_count": 0
+        },
+        {
+          "document": 7,
+          "local_content_tokens": 201563,
+          "provider_input_tokens": 201806,
+          "provider_output_tokens": 7,
+          "finding_count": 0
+        },
+        {
+          "document": 8,
+          "local_content_tokens": 230329,
+          "provider_input_tokens": 230580,
+          "provider_output_tokens": 7,
+          "finding_count": 0
+        },
+        {
+          "document": 9,
+          "local_content_tokens": 259080,
+          "provider_input_tokens": 259339,
+          "provider_output_tokens": 7,
+          "finding_count": 0
+        },
+        {
+          "document": 10,
+          "local_content_tokens": 287811,
+          "provider_input_tokens": 288078,
+          "provider_output_tokens": 7,
+          "finding_count": 0
+        }
+      ]
+    },
+    {
+      "strategy": "selective_recall",
+      "rows": [
+        {
+          "document": 1,
+          "local_content_tokens": 28974,
+          "provider_input_tokens": 29169,
+          "provider_output_tokens": 6,
+          "finding_count": 0
+        },
+        {
+          "document": 2,
+          "local_content_tokens": 28982,
+          "provider_input_tokens": 29177,
+          "provider_output_tokens": 7,
+          "finding_count": 0
+        },
+        {
+          "document": 3,
+          "local_content_tokens": 29020,
+          "provider_input_tokens": 29215,
+          "provider_output_tokens": 6,
+          "finding_count": 0
+        },
+        {
+          "document": 4,
+          "local_content_tokens": 28988,
+          "provider_input_tokens": 29183,
+          "provider_output_tokens": 6,
+          "finding_count": 0
+        },
+        {
+          "document": 5,
+          "local_content_tokens": 28920,
+          "provider_input_tokens": 29115,
+          "provider_output_tokens": 7,
+          "finding_count": 0
+        },
+        {
+          "document": 6,
+          "local_content_tokens": 28980,
+          "provider_input_tokens": 29175,
+          "provider_output_tokens": 7,
+          "finding_count": 0
+        },
+        {
+          "document": 7,
+          "local_content_tokens": 28989,
+          "provider_input_tokens": 29184,
+          "provider_output_tokens": 7,
+          "finding_count": 0
+        },
+        {
+          "document": 8,
+          "local_content_tokens": 28981,
+          "provider_input_tokens": 29176,
+          "provider_output_tokens": 7,
+          "finding_count": 0
+        },
+        {
+          "document": 9,
+          "local_content_tokens": 28966,
+          "provider_input_tokens": 29161,
+          "provider_output_tokens": 7,
+          "finding_count": 0
+        },
+        {
+          "document": 10,
+          "local_content_tokens": 28946,
+          "provider_input_tokens": 29141,
+          "provider_output_tokens": 7,
+          "finding_count": 0
+        }
+      ]
+    }
+  ]
+}

@@ -1,3 +1,12 @@
+> October 29 integration update: new interviews explicitly ask about digital assets,
+> amended/prior-year returns, dual-status residency and a separately-filing spouse
+> itemizing. Answer all four when following older demo instructions. Dependent
+> first name, last name, synthetic SSN and relationship now reach the reviewed
+> PDF with source records. Credit amounts remain sourced direct inputs; the app
+> does not infer credits from dependent details. More than four dependents or
+> duplicate dependent SSNs require staff review. Use a new case for final demos.
+> Historical limitations below may describe earlier versions.
+
 # SilverFile: teammate setup and demo guide
 
 **Submission status:** see [remaining requirements and owner actions](docs/SUBMISSION_CHECKLIST.md), [full clean demo](demo/eval_case_1.md), [full HITL demo](demo/eval_case_2.md), and [measured context experiment](docs/metrics.md).

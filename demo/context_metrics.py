@@ -1,5 +1,6 @@
 """Measure ten sequential synthetic review events. No API calls unless --live."""
 import argparse
+from decimal import Decimal
 import asyncio
 from copy import deepcopy
 import hashlib
@@ -16,10 +17,10 @@ ROOT = Path(__file__).resolve().parents[1]
 ANSWERS = dict(filing_status='single',taxpayer_birth_date='March 5, 1955',taxpayer_blind='no',
     has_dependents='no',has_self_employment_income='no',has_rental_income='no',has_capital_gains='no',
     has_foreign_income_or_accounts='no',taxpayer_can_be_claimed_as_dependent='no',wants_to_itemize='no',
-    needs_state_return='no',documents='W-2',has_estimated_payments='no',has_direct_schedule_amounts='no')
+    needs_state_return='no',documents='W-2',has_estimated_payments='no',has_direct_schedule_amounts='no',has_digital_assets='no',is_amended_or_prior_year='no',taxpayer_dual_status_alien='no',separate_spouse_itemizes='no')
 
 
-async def prepare_packet():
+async def prepare_packet(image):
     """Real OCR, Rules, MCP and audit; explicit fake reviewer captures test evidence.
 
     Its temporary case is discarded, never exported as a reviewed submission.
@@ -34,7 +35,6 @@ async def prepare_packet():
             if view['status']=='ready_for_checks':break
             field=view['pending']['field']
             if field=='w2_files':
-                image=ROOT/'demo/w2_clean.jpg'
                 view=service.upload_w2('context-fixture',view['token'],[(image.name,image.read_bytes())])
             else:
                 view=service.answer('context-fixture',view['token'],ANSWERS[field])
@@ -44,12 +44,41 @@ async def prepare_packet():
     return packets[0]
 
 
+async def prepare_workload():
+    """Ten distinct synthetic W-2 variants for one fictional taxpayer.
+
+    Each document is independently processed; this measures sequential review
+    context, not a return combining ten employers or cross-document accuracy.
+    """
+    from data.generate_fixtures import make_w2
+    packets, fixtures = [], []
+    with tempfile.TemporaryDirectory(prefix='silverfile-ten-w2-') as folder:
+        for index in range(1, 11):
+            image = Path(folder) / f'w2-{index:02d}.jpg'
+            withheld = f'{3000 + index * 125:,.2f}'
+            make_w2(image, withheld=withheld)
+            digest = hashlib.sha256(image.read_bytes()).hexdigest()
+            print(f'Preparing synthetic W-2 {index}/10 (real OCR and MCP)', flush=True)
+            packet = await prepare_packet(image)
+            amounts = packet['computation_input']['amounts']
+            if (Decimal(amounts['1z'][0]['value']) != Decimal('38750.25')
+                    or Decimal(amounts['25a'][0]['value']) != Decimal(withheld.replace(',', ''))):
+                raise ValueError(f'OCR amounts do not match synthetic document {index}.')
+            packets.append(packet)
+            fixtures.append(dict(document=index, filename=image.name,
+                sha256=digest, expected_box_1='38750.25',
+                expected_box_2=withheld.replace(',', '')))
+    if len({item['sha256'] for item in fixtures}) != 10:
+        raise ValueError('Expected ten distinct document images.')
+    return packets, fixtures
+
+
 def content_tokens(messages,encoding):
     # This measures real serialized message CONTENT, not hidden provider framing.
     return sum(len(encoding.encode(m['content'],disallowed_special=())) for m in messages)
 
 
-async def measure(packet,*,enabled,live,encoding):
+async def measure(packets,*,enabled,live,encoding):
     context=ReviewContext(REVIEW_INSTRUCTIONS,enabled=enabled)
     usage=[];rows=[]
     if live:
@@ -68,11 +97,10 @@ async def measure(packet,*,enabled,live,encoding):
             finding_count=len(report.get('findings',[]))))
         return report
     provider=make_adversarial_provider(measured_model,context=context)
-    for sequence in range(1,11):
+    for sequence, packet in enumerate(packets, 1):
         current=deepcopy(packet)
-        # Ten separately indexed synthetic replay events of the same fixture:
-        # intentionally fixed evidence size isolates history growth, not accuracy.
-        current['projection_notes'].append({'measurement_document':sequence,'synthetic_fixture_replay':True})
+        current['projection_notes'].append({'measurement_document':sequence,
+            'synthetic_distinct_w2':True})
         result=await provider(current)
         if result.status!='ready':
             raise RuntimeError(f'Review {sequence} failed; no successful metric is inferred.')
@@ -86,16 +114,17 @@ async def run(args):
         import tiktoken
     except ImportError:
         raise ValueError('Install requirements-metrics.txt before measuring tokens.') from None
-    packet=await prepare_packet()
+    packets, fixtures=await prepare_workload()
     encoding=tiktoken.get_encoding('o200k_base')
     modes=[False,True] if args.compare else [not args.no_context_strategy]
-    runs=[await measure(packet,enabled=mode,live=args.live,encoding=encoding) for mode in modes]
+    runs=[await measure(packets,enabled=mode,live=args.live,encoding=encoding) for mode in modes]
     report=dict(mode='live_api' if args.live else 'offline_local_tokenizer',
         tokenizer='tiktoken 0.12.0 / o200k_base',
         method='Sum of actual message content tokens; excludes roles/framing, response schema and provider overhead.',
-        workload='Ten sequential indexed replays of one synthetic W-2-derived review packet, one ReviewContext instance per run.',
+        workload='Ten distinct synthetic W-2 variants, independently processed through OCR/Rules/MCP/Audit, reviewed sequentially in identical order in both modes. One fictional taxpayer; not a combined ten-document return or accuracy benchmark.',
         packet_origin='Actual W-2 OCR, Rules, MCP and deterministic Audit; explicit fake reviewer only during packet capture.',
-        fixture_sha256=hashlib.sha256((ROOT/'demo/w2_clean.jpg').read_bytes()).hexdigest(),
+        fixtures=fixtures,
+        model=os.getenv('SILVERFILE_REVIEW_MODEL', 'gpt-4.1-mini') if args.live else None,
         live_api_calls=20 if args.live and args.compare else (10 if args.live else 0),runs=runs)
     output=Path(args.output);output.parent.mkdir(parents=True,exist_ok=True)
     output.write_text(json.dumps(report,indent=2)+'\n')

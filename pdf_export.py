@@ -156,7 +156,15 @@ def build_pdf(state, template):
     fields = writer.get_fields() or {}
     if len(reader.pages) != 4:
         raise ValueError("Expected the four-page 2025 form.")
+    from src.agents.dependent_contract import DependentDetails
+    dependents = [DependentDetails.model_validate(dep) for dep in
+                  state['intake_snapshot']['facts'].get('dependents', [])]
+    if len(dependents) > 4:
+        raise ValueError('More than four dependents require staff attachment review.')
     values = {}
+    for index, dep in enumerate(dependents):
+        for attr, first_number in (('first_name', 31), ('last_name', 35), ('ssn', 39), ('relationship', 43)):
+            values[field_name(fields, 1, first_number + index)] = dep.ssn.replace('-', '') if attr == 'ssn' else getattr(dep, attr)
     line_by_field = {}
     for line, (page, number) in LINE_FIELDS.items():
         key = field_name(fields, page, number)
@@ -192,7 +200,7 @@ def build_pdf(state, template):
         "Only saved, reviewed monetary values are populated. Blank fields do not imply zero.",
         "Taxpayer/spouse names and addresses were not collected by current intake and remain blank.",
         "Bank details, refund allocation, elections and signatures are not inferred.",
-        "Dependent cases currently escalate in intake/rules and cannot export through this workflow.",
+        "Dependent names, practice SSNs and relationships are copied from intake; uncollected dependent checkboxes are not inferred.",
         "Line 1a copies the reviewed W-2-only wages total when all wage sources are W-2 box 1.",
         "Attached audit-record.json contains tool inputs/results, source references, and review evidence.",
     ]
@@ -201,6 +209,7 @@ def build_pdf(state, template):
         "template_url": TEMPLATE_URL, "template_sha256": TEMPLATE_SHA256,
         "notes": notes, "form_fields": values,
         "profile": request.profile.model_dump(mode="json"),
+        "dependents": [dep.model_dump() for dep in dependents],
         "computation": result.model_dump(mode="json"),
         "audit": state["audit_result"], "adversarial": state["adversarial_result"],
     }

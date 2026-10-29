@@ -75,7 +75,7 @@ def app_data(tmp_path, monkeypatch):
             async with AsyncSqliteSaver.from_conn_string(str(tmp_path/'workflow_sessions.db')) as saver:
                 graph=build_graph(p,checkpointer=saver)
                 for case_id,blocked in [('draft-1',False),('review-1',True)]:
-                    scope=['no']*7
+                    scope=['no']*11
                     if blocked:scope[5]='yes'
                     session=interview(['single','March 5, 1955','no','no',*scope,'SSA-1099','24000','none','no','no'])
                     c={'configurable':{'thread_id':case_id}}

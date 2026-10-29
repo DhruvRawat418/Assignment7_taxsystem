@@ -75,12 +75,13 @@ def test_1099r_goes_to_ira_or_pension_lines():
     assert ira["25b"][0]["value"] == "1000.00"
 
 
-def test_dependent_ssn_never_leaves_intake():
-    replies = ["single", "March 5, 1955", "no", "yes", "Lily Park", "granddaughter", "901-23-4567", "no",
+def test_synthetic_dependent_details_reach_handoff():
+    replies = ["single", "March 5, 1955", "no", "yes", "Lily", "Park", "granddaughter", "901-23-4567", "no",
                *NO_SCOPE, "SSA-1099", "$24,000", "none", "no", "no"]
     packet = to_packet(interview(replies))
-    assert "901-23-4567" not in json.dumps(packet)
-    assert any("dependent" in n for n in packet["facts"]["free_text_notes"])
+    assert packet["facts"]["dependents"][0]["ssn"] == "901-23-4567"
+    assert packet["facts"]["dependents"][0]["last_name"] == "Park"
+    assert not packet["facts"]["free_text_notes"]
 
 
 def test_guardrail_signals_become_eligibility_facts():
