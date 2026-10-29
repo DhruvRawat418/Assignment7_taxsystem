@@ -1,60 +1,42 @@
-## October 29 integration update
+# Submission checklist — October 29, 2026
 
-Use [RELEASE_VERIFICATION.md](RELEASE_VERIFICATION.md) for current results. Task division, memory, original contributor histories and container packaging have now been integrated locally. Live reviewer/token evaluation, scope gaps and final report/video remain separate release gates.
+## Included in the runnable application baseline
 
-# Team submission checklist — October 28, 2026
+- [x] Integrated LangGraph supervisor and distinct worker agents, with original Git history.
+- [x] Persistent interviews, workflow state, task board, review/correction/stop controls.
+- [x] W-2 image OCR, deterministic MCP computations, independent audit and model review.
+- [x] Reviewed 2025 1040-SR PDF and audit record export, including dependent transcription.
+- [x] Explicit missing scope questions and withdrawn-dependent regression fix.
+- [x] Docker build, tests, health and saved-case/upload persistence verification.
+- [x] Clean and resolved-HITL evaluation guides, synthetic images and evals/cases.json index.
+- [x] Live ten-document token experiment and raw usage report in docs/metrics.md.
+- [x] Architecture diagram in README and AI disclosure with member-specific links.
 
-This is a readiness record, not a declaration that the assignment is complete.
+Latest local Docker result: 405 passed, 37 subtests; 12 optional integration tests
+passed separately. Saved database contents/uploads were unchanged after recreation.
+These results cover the runtime at 5b7095b; later publication changes organize docs.
 
-## Implemented in yong/dashboard-security
+## Still required from the team
 
-- Browser creation, single-question Intake, resume, synthetic W-2 upload and real OCR.
-- Existing six-agent LangGraph, conditional routing/parallel extraction/reducer and
-  bounded review loop; actual MCP arithmetic and deterministic replay Audit.
-- Model credential password field, paid-action gates, source review and PDF/audit download.
-- Existing human correction/rechecks/stop; case attention links and styled workbench.
-- Explicit direct Schedule/payment/credit amounts and attributable no-amounts decisions.
-- Legacy pre-handoff interview continuation without discarding earlier answers.
-- Xiaolong's Docker packaging integrated with browser styling/config and persistent uploads.
-- Full GUI instructions in demo/eval_case_1.md and demo/eval_case_2.md.
-- Reproducible local context-token comparison, honestly distinguished from provider usage.
+- [ ] Fresh-machine Docker check by a teammate, including both PDFs.
+- [ ] Final five-page report with diagram, each agent, failure modes and scope limits.
+- [ ] Confirmed named specialization/responsibility table, consistent with Git history.
+- [ ] 5–10 minute demo video or grader-accessible link showing clean/HITL/PDF flows.
+- [ ] Review each AI disclosure for accuracy; include it with the submission.
+- [ ] Verify grader access to repository, video and a usable API-key arrangement.
+- [ ] Add report/video links to the root README when the artifacts exist.
 
-## Required before final submission
+## Scope limitations to explain honestly
 
-| Item | Owner/action | Evidence required |
-| --- | --- | --- |
-| Task-division integration | Xinrui/Dhruv: review `Xinrui/task-diviation` against final graph | Runtime allocation/dependency board confirmed or limitations documented |
-| Team integration | Dhruv/team: review and merge intended changes; choose final branch | Final README points at actual runnable branch, not empty main |
-| Live clean run | Key owner: enter own OpenAI key in GUI and run eval1 | Saved reviewed case, four-page PDF, inspectable source/audit JSON |
-| Live HITL run | Key owner: run eval2, correct only the synthetic input mistake | Actual interrupt, staff reason/history, revision2, PDF after fresh review |
-| Tax scope coverage | Intake/Rules/export owners | Add dependent-success path; populate requested dependent fields without assuming credits; collect identity/address fields as needed |
-| Scope defaults | Intake/Rules owners | Explicitly ask remaining defaulted risk flags (e.g. dual-status alien, separately-filing spouse itemizes, prior-year requests) and test blocking paths |
-| Context evaluation | Memory owner | Assess brief ambiguity; run actual-provider comparison if required and include real usage counts; no zero-token OCR substitute |
-| Demo cases | Team | Have a teammate follow both updated markdown files in a fresh environment |
-| Full diagram | Overall Mermaid architecture now in README | Team: verify rendered labels and describe real supervisor routes in report |
-| Specialization table | Team | Actual named owner for each selected focus area; Yong = Security plus Audit/dashboard contributions |
-| AI disclosure | Team | Combine member-specific disclosure paragraphs; generic we-used-AI is insufficient |
-| Demo video | Team | 5–10 minutes: clean creation, actual image OCR, provenance, real interrupt/correction, PDF, resume and loop bound |
-| Repository access | Repository owner | Graders can access final branch and meaningful individual commits |
+The current assignment-subset draft leaves uncollected taxpayer/spouse identity
+and address blank. Dependency transcription is supported; full real-world credit
+eligibility is not inferred. More than four dependents escalate. Direct schedule
+amounts are sourced input; supporting schedule PDFs are not generated. No filing,
+signatures, staff authentication or multi-user deployment is provided. A successful
+sample or passing test suite does not establish every possible tax-profile case.
 
-## Bonus work
+## Branch scope
 
-- Dashboard/HITL (15): implementation exists; validate clean and correction demos after integration.
-- Five-page report (10): report owner must finish design/diagram/agents/limits/roles.
-  No final report artifact was present in this checkout during this check.
-- Docker (5): base Linux build evidence is in docs/DOCKER.md, credited to Xiaolong.
-  Browser-extended runtime commit6fe6c58 passed Linux Docker CI run40782142415 (build/dependencies/offline tests/health). Rebuild after later merges; local Docker is unavailable.
-
-## Security boundaries and remaining limitations
-
-Synthetic assignment data only; block real-looking SSNs before checkpointing.
-No credentials in cases, exports, logs, Git or image. Uploads are bounded images
-stored under generated names. Treat document text as untrusted evidence. Failed,
-stale, unresolved or out-of-scope cases must not export. Nothing files a return.
-
-Local single-operator use remains the supported deployment. No staff login or
-full multi-user/crash recovery has been added. Do not expose the dashboard publicly
-without designing those controls. Dependent cases still escalate; identity fields
-remain blank, and direct Schedule transcription does not infer eligibility.
-Do not call this system filing-ready or claim full assignment scope solely because
-all current tests pass.
+The application baseline includes Yong's dependent fix 508151e. His later
+W-2 document editor/UI commits are not included; they require a separate review.
+Other teammates' newer unreviewed branches are not automatically part of main.

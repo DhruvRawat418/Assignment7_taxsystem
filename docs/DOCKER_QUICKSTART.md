@@ -13,22 +13,15 @@ The key is not included. Nothing is filed with the IRS.
 
 ## 1. Download the tested application
 
-Before the integration PR is merged, use:
-
-```sh
-git clone --branch dhruv/submission-integration https://github.com/DhruvRawat418/Assignment7_taxsystem.git
-cd Assignment7_taxsystem
-```
-
-After the integration PR is merged, graders should instead use:
+Use the shared application on main:
 
 ```sh
 git clone --branch main https://github.com/DhruvRawat418/Assignment7_taxsystem.git
 cd Assignment7_taxsystem
 ```
 
-Use one of those blocks, not both. The integration branch must first be pushed
-by Dhruv; a local-only branch cannot be cloned by teammates.
+For a proposed update that has not been merged, use the branch explicitly named
+in that update's pull request instead. Do not copy separate teammate folders.
 
 ## 2. Build and start
 

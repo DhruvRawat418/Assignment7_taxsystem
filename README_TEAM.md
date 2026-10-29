@@ -33,11 +33,11 @@ For a packaged Python/OCR/MCP environment, follow [Run with Docker](docs/DOCKER.
 Use the browser-extension branch for the complete browser flow. Dhruv's original integration remains its base:
 
 ```sh
-git clone --branch dhruv/submission-integration https://github.com/DhruvRawat418/Assignment7_taxsystem.git
+git clone --branch main https://github.com/DhruvRawat418/Assignment7_taxsystem.git
 cd Assignment7_taxsystem
 ```
 
-If the repository is private, sign into GitHub with an account that has access. Alternatively, open the repository on GitHub, choose `dhruv/submission-integration` in the branch selector, and choose Code > Download ZIP. Extract it and open the extracted folder in VS Code. Do not download the default branch unless this work has been merged there.
+If the repository is private, sign into GitHub with an account that has access. Alternatively, open the repository on GitHub, choose `main` in the branch selector, and choose Code > Download ZIP. Extract it and open the extracted folder in VS Code. Use the integrated main branch for the shared application.
 
 Open a terminal in the project root. You should see `dashboard.py`, `pdf_export.py`, `requirements-team.txt`, `src/`, and `demo/`. All commands below run from this root.
 
