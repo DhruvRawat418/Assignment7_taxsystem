@@ -1,0 +1,6 @@
+# Optional cross-component tests; the standalone Computation dependencies stay isolated.
+-r requirements-computation.txt
+# Importing the published Extraction models currently loads its OCR module.
+# These packages support imports only; this suite does not run an OCR engine.
+numpy>=1.26,<3
+Pillow>=10.4,<13

@@ -18,3 +18,11 @@ offline CI workflow, and startup instructions. Packaging checks are run in the
 GitHub Codespace using synthetic fixtures; live OpenAI review is not part of
 those offline checks. Existing teammate agents and tax-calculation logic are
 preserved by this packaging change.
+
+On 2026-10-26, Codex also inspected published teammate branches, compared their
+contracts, and assisted with optional cross-component tests and a team handoff
+guide. The tests use actual Rules, mapping, Computation, Audit, LangGraph and MCP
+code with synthetic Intake/Extraction/adversarial fixtures. A labelled test-only
+projection isolates the known Rules metadata mismatch; a separate direct-contract
+test reports that unresolved mismatch as an expected failure. No teammate agent
+implementation, production supervisor or tax formula was changed in this update.
