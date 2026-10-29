@@ -32,6 +32,10 @@ a successful live review. Do not reuse another person's tax documents or keys.
 | Someone else can claim you | no |
 | Itemize expenses | no |
 | State return | no |
+| Digital-asset activity during 2025 | no |
+| Amended or prior-year return | no |
+| Dual-status alien during 2025 | no |
+| Separately-filing spouse itemizes (not applicable for Single) | no |
 | Tax forms | W-2 |
 | W-2 upload | Use sample W-2 |
 | Payments sent during 2025 | no |
@@ -41,9 +45,11 @@ Expected fixture regression amounts: line1z `38,750.25`, line12e `17,750.00`,
 line13b `6,000.00`, line24 `1,561.53`, line25a `3,125.50`, line34 `1,563.97`,
 line37 `0.00`. These are synthetic regression expectations, not tax advice.
 
-The current PDF intentionally leaves uncollected identity/address fields blank;
-dependent cases still escalate. These are remaining team scope gaps, not evidence
-that the clean W-2 path covers the entire assignment.
+The current PDF intentionally leaves uncollected taxpayer/spouse identity/address
+fields blank. Dependent first/last name, synthetic SSN and relationship are now
+supported for up to four people; see docs/DEPENDENT_SCOPE_VERIFICATION.md. Unknown,
+duplicate or excess dependents require review. This clean W-2 case alone does not
+establish coverage of every supported profile.
 
 For accessibility demonstration: leave after the birth-date answer, return through
 **Case workspace → Continue eval-clean-001**, inspect **Answers saved so far**, and
