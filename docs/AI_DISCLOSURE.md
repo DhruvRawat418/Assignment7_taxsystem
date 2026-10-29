@@ -1,3 +1,21 @@
+# Team AI-use disclosure
+
+The team used AI assistance to interpret requirements, design agent interfaces, implement code, write tests, diagnose integration failures, and draft documentation. The implementation uses local OCR and deterministic MCP calculation tools; the live adversarial reviewer uses OpenAI, while offline tests explicitly substitute model responses. AI-assisted development and a test double are not evidence of live-model correctness. Member-specific disclosures below describe who used which tools and the scope of assistance. The team must review these accounts and explain the submitted implementation in its own words.
+
+- [Intake](AI_DISCLOSURE_INTAKE.md)
+- [Memory — Hanna, Claude](AI_DISCLOSURE_MEMORY.md)
+- [Eligibility](../AI_DISCLOSURE_ELIGIBILITY.md)
+- [Computation and Docker](AI_DISCLOSURE_COMPUTATION.md)
+- [Audit](AI_DISCLOSURE_AUDIT.md)
+- [Original orchestration skeleton](AI_DISCLOSURE_INTEGRATION.md)
+- [Dashboard and browser workflow](AI_DISCLOSURE_DASHBOARD.md)
+
+## Dhruv — orchestration, dashboard integration and release verification
+
+Dhruv used OpenAI Codex for step-by-step integration of teammates' agents, connecting the OpenAI reviewer, persistent human-review correction/stop flows, the staff dashboard, PDF export with provenance, tests and teammate setup instructions. For release integration, Codex inspected all published branches and the assignment, merged contributor histories locally, resolved overlapping changes, exposed the task board, and ran local and container checks where available. Existing agents remain credited to their original authors. The verification record distinguishes automated tests, mock review responses and pending live runs. No tax filing was performed, and no claim of complete assignment coverage follows solely from passing tests.
+
+## Original extraction and task-division disclosure
+
 # AI-use disclosure - Xinrui's contributions
 
 I used OpenAI Codex to help read the assignment requirements and our shared team

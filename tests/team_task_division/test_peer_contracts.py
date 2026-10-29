@@ -10,7 +10,7 @@ import pytest
 
 
 @pytest.mark.ocr
-def test_real_team_handoff_and_known_contract_blocker(tmp_path):
+def test_real_team_handoff_accepts_full_rules_metadata(tmp_path):
     names = ("SILVERFILE_TEAM_INTAKE", "SILVERFILE_TEAM_RULES", "SILVERFILE_TEAM_COMPUTATION")
     paths = [os.environ.get(name) for name in names]
     if not any(paths):
@@ -35,8 +35,8 @@ def test_real_team_handoff_and_known_contract_blocker(tmp_path):
     assert run.returncode == 0, run.stderr
     report = json.loads(run.stdout)
     raw, smoke = report["raw_contract"], report["projected_smoke"]
-    assert raw["status"] == "blocked" and raw["issues"] == [{"code": "invalid_mapping", "owner": "rules"}]
-    assert raw["tool_calls"] == 0
+    assert raw["status"] == "ready_for_human_review" and raw["issues"] == []
+    assert raw["tool_calls"] == 40 and raw["audit_status"] == "passed"
     assert smoke["status"] == "ready_for_human_review" and smoke["audit_status"] == "passed"
     assert smoke["tool_calls"] == 40
     assert smoke["stages"] == ["intake", "extract", "rules", "compute", "audit", "adversarial", "complete"]

@@ -1,3 +1,7 @@
+# Integration update — October 29, 2026
+
+The submission integration branch now includes this policy and the dashboard Agent tasks tab. The adapter accepts line_12d_boxes, and the live OpenAI reviewer is wired in the app. SQLite persistence and PDF export are included. The cross-checkout probe now expects the full raw Rules packet to succeed; its reviewer remains an explicit test double. The historical component report below describes the earlier branch snapshot, not current release blockers.
+
 # Task Division & Management — Xinrui
 
 Implemented on `Xinrui/work`, 2026-10-27. This is a technical specialization:

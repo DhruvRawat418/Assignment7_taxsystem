@@ -1,6 +1,6 @@
 # SilverFile — browser workflow and staff review
 
-Use branch **`yong/dashboard-security`** for this browser extension. The shared
+Use branch **`dhruv/submission-integration`** for this browser extension. The shared
 `main` branch may not yet contain the integrated app. Start with
 [README_TEAM.md](README_TEAM.md) for setup and [BROWSER_WORKFLOW.md](docs/BROWSER_WORKFLOW.md)
 for browser steps. The original agents remain credited to their team authors.
@@ -15,6 +15,10 @@ Nothing is filed; unresolved or stale cases cannot export.
 [context measurement](docs/metrics.md), and [Docker instructions](docs/DOCKER.md).
 The context table is local tokenizer evidence, not a completed live API experiment.
 Identity/dependent-success coverage and remaining scope defaults still need team work.
+
+## Integrated team contributions
+
+This local release candidate combines Hanna’s memory/intake, Xinrui’s extraction/task allocation, Jijuan’s Rules, Xiaolong’s computation/Docker, Yong’s Audit/browser dashboard, and Dhruv’s orchestration/PDF integration. Original branch histories are preserved. See [current release verification](docs/RELEASE_VERIFICATION.md). The **Agent tasks** tab exposes the allocation and dependency board.
 
 ## Overall orchestration
 

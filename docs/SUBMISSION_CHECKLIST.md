@@ -1,3 +1,7 @@
+## October 29 integration update
+
+Use [RELEASE_VERIFICATION.md](RELEASE_VERIFICATION.md) for current results. Task division, memory, original contributor histories and container packaging have now been integrated locally. Live reviewer/token evaluation, scope gaps and final report/video remain separate release gates.
+
 # Team submission checklist — October 28, 2026
 
 This is a readiness record, not a declaration that the assignment is complete.

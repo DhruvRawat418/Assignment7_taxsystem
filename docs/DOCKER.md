@@ -1,3 +1,7 @@
+## Current merged validation
+
+See [RELEASE_VERIFICATION.md](RELEASE_VERIFICATION.md) for the October 29 local Linux ARM64 build, test and persistence results. Historical statements below about Docker being unavailable describe the earlier workstation check. The merged candidate has now been built locally.
+
 # Browser extension packaging handoff
 
 Base Docker work is Xiaolong's commit `d2c110f` on `xiaolong/docker`.
@@ -13,17 +17,17 @@ Linux GitHub Actions build, dependency check, offline tests and dashboard health
 [Docker CI run 40782142415](https://github.com/DhruvRawat418/Assignment7_taxsystem/actions/runs/40782142415).
 This macOS workstation has no local Docker engine. The team should rebuild after
 any later runtime merge and still perform both live-key demos before release.
-Use `yong/dashboard-security` when cloning the browser extension. After starting,
+Use `dhruv/submission-integration` when cloning the browser extension. After starting,
 click **New case**; the old CLI creation instructions below are optional.
 
 # Run SilverFile with Docker
 
-Run commands from the repository root on the `yong/dashboard-security` branch. Install Docker Desktop (macOS/Windows) or Docker Engine with the Compose plugin (Linux). In GitHub Codespaces, use the terminal in this repository. Check that `docker info` and `docker compose version` succeed.
+Run commands from the repository root on the `dhruv/submission-integration` branch. Install Docker Desktop (macOS/Windows) or Docker Engine with the Compose plugin (Linux). In GitHub Codespaces, use the terminal in this repository. Check that `docker info` and `docker compose version` succeed.
 
 For a fresh checkout:
 
 ```sh
-git clone --branch yong/dashboard-security https://github.com/DhruvRawat418/Assignment7_taxsystem.git
+git clone --branch dhruv/submission-integration https://github.com/DhruvRawat418/Assignment7_taxsystem.git
 cd Assignment7_taxsystem
 ```
 

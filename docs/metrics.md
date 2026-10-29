@@ -71,3 +71,12 @@ provider numbers. Review failure exits with an error. A live report is not yet
 present; include it only after actually running and checking it. This local replay
 is preparation for the assignment experiment, not a claim that its live-model
 evaluation requirement has already been satisfied.
+
+## Integrated rerun — October 29, 2026
+
+The merged candidate repeated the offline experiment with real OCR/MCP/Audit and
+an explicit fake reviewer for measurement. Disabled content tokens ranged from
+28,884 to 287,103; enabled counts were 28,884 initially and 28,906 thereafter.
+Zero paid calls. Raw output: context-metrics-integrated.json. Different evidence
+serialization from the merged extraction code changes counts slightly; both
+measurements are retained, and neither is represented as provider-reported usage.

@@ -68,6 +68,11 @@ def test_complete_w2_case_and_download_entirely_in_gui(tmp_path,monkeypatch):
     assert case['status']=='ready_for_human_review' and len(calls)==1
     assert case['computation_result']['lines']['1z']['value']=='38750.25'
     assert case['audit_result']['status']=='passed'
+    assert case['task_plan']['case_status']=='ready_for_human_review'
+    tasks={t['task_id']:t for t in case['task_plan']['tasks']}
+    assert tasks['adversarial']['status']=='done'
+    assert tasks['final_review']['status']=='ready'
+    assert any(tab.label=='Agent tasks' for tab in app.tabs)
     next(b for b in app.button if b.label=='Generate draft 1040-SR').click().run(timeout=30)
     assert not app.exception and not app.error and len(app.get('download_button'))==2
     assert b'offline-test-only' not in (tmp_path/'workflow_sessions.db').read_bytes()

@@ -2,7 +2,7 @@ name: Docker offline checks
 
 on:
   push:
-    branches: [xiaolong/docker, yong/dashboard-security, main]
+    branches: [xiaolong/docker, yong/dashboard-security, dhruv/submission-integration, main]
   pull_request:
 
 permissions:

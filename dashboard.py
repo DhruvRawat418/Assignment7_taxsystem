@@ -214,6 +214,7 @@ def load_cases(database):
                 "audit_result": state.get("audit_result", {}),
                 "adversarial_result": state.get("adversarial_result", {}),
                 "stages": [event.get("stage", "unknown") for event in state.get("events", [])],
+                "task_plan": state.get("task_plan", {}),
             })
         return cases
 
@@ -601,7 +602,7 @@ def main(database=None):
     heading.subheader(case["case_id"])
     badge.markdown(status_badge_html(case["status"]), unsafe_allow_html=True)
     badge.caption(f"Revision {case['revision']}")
-    actions, evidence, history = st.tabs(["Review & actions", "Draft & evidence", "History"])
+    actions, evidence, history, tasks = st.tabs(["Review & actions", "Draft & evidence", "History", "Agent tasks"])
     with actions:
         show_review_panel(database, case)
     with evidence:
@@ -610,6 +611,18 @@ def main(database=None):
         show_return(case)
     with history:
         show_history(database, case)
+    with tasks:
+        st.subheader("Agent tasks and dependencies")
+        plan = case.get("task_plan", {})
+        if plan.get("tasks"):
+            st.caption("Saved workflow allocation. Completed tasks describe evidence, not approval to file.")
+            st.dataframe([{
+                "Task": task["task_id"], "Owner": task["owner"],
+                "Status": task["status"],
+                "Depends on": ", ".join(task["depends_on"]) or "None",
+            } for task in plan["tasks"]], hide_index=True, width="stretch")
+        else:
+            st.info("No task allocation recorded yet. Older saved cases may predate this view.")
 
 
 if __name__ == "__main__":

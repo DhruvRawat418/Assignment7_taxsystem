@@ -25,7 +25,7 @@ def run(**overrides):
 
 
 def to_adapter(state, data):
-    return prepare_packet(state["intake_snapshot"], {k: data[k] for k in PACKET_KEYS},
+    return prepare_packet(state["intake_snapshot"], data,
                           state["extractions"])
 
 

@@ -1,8 +1,8 @@
 """Opt-in integration probe, run in a temporary workspace by the pytest driver.
 
 Real teammate Intake/Rules/Computation, our real image extraction, and real MCP
-Audit. Only Adversarial Review is a labelled test double. The second run uses an
-explicit TEST-ONLY metadata projection to isolate the known Rules interface bug.
+Audit. Only Adversarial Review is a labelled test double. The second run retains the historical test-only projection for comparison.
+The integrated adapter must now accept the full Rules metadata directly.
 It is not a production workaround or evidence of adversarial LLM evaluation.
 """
 import asyncio
@@ -33,7 +33,7 @@ def interview():
     state = graph.invoke(initial_intake_state(), config)
     # Synthetic replies, delivered through the real Intake interrupt/resume node.
     replies = ["single", "March 5, 1955", "no", "no", *(["no"] * 7),
-               "W-2 and SSA-1099", "demo/w2_clean.jpg", "$24,000", "none", "no"]
+               "W-2 and SSA-1099", "demo/w2_clean.jpg", "$24,000", "none", "no", "no"]
     for reply in replies:
         assert state["__interrupt__"], "Interview ended before all supplied answers"
         state = graph.invoke(Command(resume=reply), config)

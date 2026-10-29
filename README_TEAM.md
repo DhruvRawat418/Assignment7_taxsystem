@@ -7,7 +7,7 @@ upload a synthetic W-2, configure the session's model key and run checks without
 a terminal handoff. See [browser workflow and local OCR setup](docs/BROWSER_WORKFLOW.md).
 The earlier CLI instructions below remain available for existing workflows.
 
-The `yong/dashboard-security` update adds the staff workbench: search/status
+The `dhruv/submission-integration` update adds the staff workbench: search/status
 filters, direct attention links, and review/evidence/history tabs. Read the
 [dashboard guide and Docker handoff](docs/DASHBOARD_WORKBENCH.md) and
 [AI-use disclosure](docs/AI_DISCLOSURE_DASHBOARD.md). It retains the existing
@@ -24,11 +24,11 @@ For a packaged Python/OCR/MCP environment, follow [Run with Docker](docs/DOCKER.
 Use the browser-extension branch for the complete browser flow. Dhruv's original integration remains its base:
 
 ```sh
-git clone --branch yong/dashboard-security https://github.com/DhruvRawat418/Assignment7_taxsystem.git
+git clone --branch dhruv/submission-integration https://github.com/DhruvRawat418/Assignment7_taxsystem.git
 cd Assignment7_taxsystem
 ```
 
-If the repository is private, sign into GitHub with an account that has access. Alternatively, open the repository on GitHub, choose `yong/dashboard-security` in the branch selector, and choose Code > Download ZIP. Extract it and open the extracted folder in VS Code. Do not download the default branch unless this work has been merged there.
+If the repository is private, sign into GitHub with an account that has access. Alternatively, open the repository on GitHub, choose `dhruv/submission-integration` in the branch selector, and choose Code > Download ZIP. Extract it and open the extracted folder in VS Code. Do not download the default branch unless this work has been merged there.
 
 Open a terminal in the project root. You should see `dashboard.py`, `pdf_export.py`, `requirements-team.txt`, `src/`, and `demo/`. All commands below run from this root.
 
