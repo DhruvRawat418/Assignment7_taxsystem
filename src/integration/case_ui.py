@@ -83,7 +83,7 @@ def _finish_run(root, case_id):
     except Exception:
         st.error('Checks could not finish. Your interview is saved; inspect the case before retrying.')
         return
-    st.session_state['open_case_id'] = case_id
+    st.session_state['_open_case_after_run'] = case_id
     st.session_state['_screen'] = 'workspace'
     st.session_state['action_result'] = (case_id, result)
     st.rerun()

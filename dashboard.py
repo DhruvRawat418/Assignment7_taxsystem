@@ -528,6 +528,9 @@ def default_database():
 def main(database=None):
     st.set_page_config(page_title="SilverFile staff dashboard", page_icon="📋", layout="wide")
     workbench_style()
+    requested_case = st.session_state.pop("_open_case_after_run", None)
+    if requested_case is not None:
+        st.session_state["open_case_id"] = requested_case
     database = database or default_database()
     from src.integration.case_ui import start_new_case, workspace, render_intake, model_settings, interview_rows
     with st.sidebar:
@@ -553,7 +556,7 @@ def main(database=None):
     if "action_result" in st.session_state:
         case_id, result = st.session_state.pop("action_result")
         if result["status"] == "ready_for_human_review":
-            st.success(f"{case_id}: correction saved; checks finished; ready for human review.")
+            st.success(f"{case_id}: checks finished; ready for human review.")
         elif result["status"] == "stopped":
             st.success(f"{case_id}: stopped. The saved case and its issues have been retained.")
         else:
@@ -602,7 +605,7 @@ def main(database=None):
     heading.subheader(case["case_id"])
     badge.markdown(status_badge_html(case["status"]), unsafe_allow_html=True)
     badge.caption(f"Revision {case['revision']}")
-    actions, evidence, history, tasks = st.tabs(["Review & actions", "Draft & evidence", "History", "Agent tasks"])
+    actions, evidence, history, tasks = st.tabs(["Review & actions", "Draft & evidence", "History", "Agent tasks"], key="case_detail_tabs")
     with actions:
         show_review_panel(database, case)
     with evidence:

@@ -99,3 +99,26 @@ def test_session_key_is_clearable_and_never_enters_interview_checkpoint(tmp_path
     assert b'session-private-key-marker' not in (tmp_path/'intake_sessions.db').read_bytes()
     next(b for b in app.button if b.label=='Clear session key').click().run(timeout=30)
     assert next(t for t in app.text_input if t.label=='OpenAI API key').value==''
+
+
+def test_retry_review_after_case_selector_is_rendered(tmp_path, monkeypatch):
+    import asyncio
+    from src.agents import openai_transport
+    from tests.integration.test_case_service import complete
+    s = service(tmp_path)
+    complete(s, 'retry-ui')
+    async def failing_model(messages):
+        raise RuntimeError('Explicit simulated provider outage')
+    assert asyncio.run(s.run_checks('retry-ui', failing_model))['status'] == 'blocked'
+    calls = []
+    async def recovered_model(messages):
+        calls.append(messages)
+        return {'findings': []}
+    monkeypatch.setattr(openai_transport, 'openai_review_call', recovered_model)
+    monkeypatch.setenv('OPENAI_API_KEY', 'offline-test-only')
+    app = app_for(tmp_path)
+    next(b for b in app.button if b.label == 'Retry AI review').click().run(timeout=60)
+    assert not app.exception and not app.error
+    assert len(calls) == 1
+    assert s.workflow_state('retry-ui')['status'] == 'ready_for_human_review'
+    assert next(w for w in app.selectbox if w.label == 'Open a case').value == 'retry-ui'

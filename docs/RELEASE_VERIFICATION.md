@@ -59,8 +59,8 @@ claiming full coverage or attempting to predict a grade.
 - Real OCR/browser/PDF paths in offline tests use an explicit fake external reviewer.
 - Offline context comparison rerun; outputs/context-metrics-integrated.json records
   actual content-token counts and zero paid calls.
-- Live reviewer and paid metrics are not verified by the above checks. No API key
-  was available to the verification process.
+- Live reviewer and paid metrics are not verified by the above checks. The shell process had no API key. Later live review used the key entered by
+  Dhruv directly into the browser session, as recorded below.
 
 ### Container verification (local Docker Desktop, Linux ARM64)
 
@@ -84,7 +84,7 @@ claiming full coverage or attempting to predict a grade.
   silverfile-verification_case_data. It does not replace older host case databases.
 
 The earlier GitHub CI evidence is historical; these results are actual local tests
-of the merged runtime. Paid API review remains pending.
+of the merged runtime. Live API results are recorded below; the twenty-request metrics experiment remains pending.
 
 ## Remaining release gates, in order
 
@@ -118,3 +118,34 @@ The local placeholder email was corrected to Dhruv’s explicitly supplied addre
 Only the five newly created, unpublished integration merge commits were recreated
 with the corrected identity; original contributor parents and published branches
 were preserved. Main has not been changed.
+
+## Live Docker/browser checks and discovered retry fix
+
+Dhruv entered his key directly into the session password field. No credential was
+read out, logged, committed or copied to a file. Two actual OpenAI review calls
+completed successfully.
+
+- `verification-offline-no-key`: the earlier intentional missing-provider case
+  was retried through the GUI; it reached ready_for_human_review, revision 1. Its
+  historical case ID reflects its initial offline setup, not its final live review.
+- `verification-live-hitl`: created and answered entirely through the browser,
+  attached the real sample image, intentionally answered itemize=yes, and reached
+  an actual Rules interrupt. Staff corrected the synthetic mistake with a reason.
+  Rules/MCP/Audit and a new real model review completed, revision 2, no issues.
+- Both four-page PDFs were generated and downloaded in the GUI. All 38 mapped
+  monetary values matched the embedded audit records; widget appearances and
+  canonical fields passed exporter verification. Uncollected identity/dependent
+  fields remain the disclosed limitation.
+- The first live retry revealed StreamlitWidgetAlreadyInstantiatedError after
+  the model result had already persisted. Fixed by queuing case selection for the
+  next rerun, before the selector is rendered. Added a regression that simulates
+  a failed provider then retries through the real Streamlit UI. Also gave tabs
+  a stable key and removed the misleading correction-saved label from generic runs.
+- After the retry fix: targeted UI suite 5 passed; rebuilt Docker full suite
+  391 passed, 12 optional skips, 37 subtests passed (40.26 s). The 12 optional
+  probes had already passed separately; total exercised tests is now 403.
+
+Paid token metrics, live evaluation of additional profiles, and the functional
+scope gaps remain open. Successful model responses on two fixtures do not prove
+general reviewer accuracy. The model session key must be entered again after a
+container/session restart.
