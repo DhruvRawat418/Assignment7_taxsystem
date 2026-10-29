@@ -1,0 +1,12 @@
+{
+  "w2_clean.jpg": {
+    "tax_year": "2025",
+    "employee_ssn": "901-12-3456",
+    "box_1": "38750.25",
+    "box_2": "3125.50"
+  },
+  "w2_missing_withholding.jpg": {
+    "expected_status": "needs_review",
+    "missing_box": "2"
+  }
+}

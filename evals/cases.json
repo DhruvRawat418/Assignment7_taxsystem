@@ -1,0 +1,24 @@
+{
+  "description": "Index of manual GUI evaluation scenarios, not an automated evaluation runner.",
+  "cases": [
+    {
+      "id": "eval_case_1",
+      "instructions": "demo/eval_case_1.md",
+      "w2_image": "demo/w2_clean.jpg",
+      "expected_status": "ready_for_human_review",
+      "expected_outputs": [
+        "1040-SR draft PDF",
+        "audit JSON"
+      ]
+    },
+    {
+      "id": "eval_case_2",
+      "instructions": "demo/eval_case_2.md",
+      "w2_image": "demo/w2_clean.jpg",
+      "expected_initial_status": "paused_for_human_review",
+      "expected_issue": "itemized_deductions_out_of_scope",
+      "expected_status_after_documented_correction": "ready_for_human_review",
+      "expected_revision": 2
+    }
+  ]
+}

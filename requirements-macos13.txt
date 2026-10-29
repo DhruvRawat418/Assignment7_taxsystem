@@ -1,0 +1,4 @@
+# Optional local profile, verified on macOS 13.0 arm64 / Python 3.12.
+# Install AFTER requirements-team.txt; do not combine the two pinned files in one resolver run.
+# The team's default 1.23.2 pin remains unchanged for its validated environments.
+onnxruntime==1.21.1; sys_platform == "darwin" and platform_machine == "arm64"

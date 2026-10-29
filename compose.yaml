@@ -1,0 +1,19 @@
+services:
+  app:
+    image: silverfile:local
+    build: .
+    init: true
+    ports:
+      - "127.0.0.1:${SILVERFILE_PORT:-8501}:8501"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      SILVERFILE_REVIEW_MODEL: ${SILVERFILE_REVIEW_MODEL:-gpt-4.1-mini}
+    volumes:
+      - case_data:/app/state
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+volumes:
+  case_data:

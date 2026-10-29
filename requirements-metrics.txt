@@ -1,0 +1,2 @@
+# Optional local context measurement; production review does not need tiktoken.
+tiktoken==0.12.0

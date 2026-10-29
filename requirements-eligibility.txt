@@ -1,0 +1,23 @@
+# Python >= 3.11. Eligibility & Rules is deterministic: the rule engine, the
+# contract models and the unittest suite need only pydantic, which the repo
+# already pins in requirements.txt.
+#
+# A language model is optional and used in exactly one place, scope_sentinel,
+# to classify free-text intake notes against the out-of-scope rules. Without
+# one the agent still runs: free text escalates to a human instead of being
+# classified, which is the safe default. Install an LLM SDK only if you want
+# that classification:
+#
+#   pip install langchain-anthropic   # or another LangChain chat model
+#
+# No API key is required for the test suite or either demo scenario.
+pydantic>=2.9,<3
+
+# numpy and Pillow are not used by this component. They are needed only to
+# import it inside the repo: src/document_extraction/__init__.py eagerly
+# imports extractor -> ocr, so any module that reads ExtractionResult, this
+# agent and src/integration/adapters.py alike, loads the OCR dependencies at
+# import time. onnxruntime and rapidocr are not needed, because ocr.py imports
+# them lazily inside a function.
+numpy>=1.26,<3
+Pillow>=10.4,<13

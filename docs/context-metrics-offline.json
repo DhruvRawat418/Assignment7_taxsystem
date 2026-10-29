@@ -1,0 +1,161 @@
+{
+  "mode": "offline_local_tokenizer",
+  "tokenizer": "tiktoken 0.12.0 / o200k_base",
+  "method": "Sum of actual message content tokens; excludes roles/framing, response schema and provider overhead.",
+  "workload": "Ten sequential indexed replays of one synthetic W-2-derived review packet, one ReviewContext instance per run.",
+  "packet_origin": "Actual W-2 OCR, Rules, MCP and deterministic Audit; explicit fake reviewer only during packet capture.",
+  "fixture_sha256": "380b227ebb6d354ca67a11cab70b4cb6266f005e6e74b11cf4bf9d5b8a8494e7",
+  "live_api_calls": 0,
+  "runs": [
+    {
+      "strategy": "disabled_full_history",
+      "rows": [
+        {
+          "document": 1,
+          "local_content_tokens": 28941,
+          "provider_input_tokens": null,
+          "provider_output_tokens": null,
+          "finding_count": 0
+        },
+        {
+          "document": 2,
+          "local_content_tokens": 57689,
+          "provider_input_tokens": null,
+          "provider_output_tokens": null,
+          "finding_count": 0
+        },
+        {
+          "document": 3,
+          "local_content_tokens": 86437,
+          "provider_input_tokens": null,
+          "provider_output_tokens": null,
+          "finding_count": 0
+        },
+        {
+          "document": 4,
+          "local_content_tokens": 115185,
+          "provider_input_tokens": null,
+          "provider_output_tokens": null,
+          "finding_count": 0
+        },
+        {
+          "document": 5,
+          "local_content_tokens": 143933,
+          "provider_input_tokens": null,
+          "provider_output_tokens": null,
+          "finding_count": 0
+        },
+        {
+          "document": 6,
+          "local_content_tokens": 172681,
+          "provider_input_tokens": null,
+          "provider_output_tokens": null,
+          "finding_count": 0
+        },
+        {
+          "document": 7,
+          "local_content_tokens": 201429,
+          "provider_input_tokens": null,
+          "provider_output_tokens": null,
+          "finding_count": 0
+        },
+        {
+          "document": 8,
+          "local_content_tokens": 230177,
+          "provider_input_tokens": null,
+          "provider_output_tokens": null,
+          "finding_count": 0
+        },
+        {
+          "document": 9,
+          "local_content_tokens": 258925,
+          "provider_input_tokens": null,
+          "provider_output_tokens": null,
+          "finding_count": 0
+        },
+        {
+          "document": 10,
+          "local_content_tokens": 287673,
+          "provider_input_tokens": null,
+          "provider_output_tokens": null,
+          "finding_count": 0
+        }
+      ]
+    },
+    {
+      "strategy": "selective_recall",
+      "rows": [
+        {
+          "document": 1,
+          "local_content_tokens": 28941,
+          "provider_input_tokens": null,
+          "provider_output_tokens": null,
+          "finding_count": 0
+        },
+        {
+          "document": 2,
+          "local_content_tokens": 28963,
+          "provider_input_tokens": null,
+          "provider_output_tokens": null,
+          "finding_count": 0
+        },
+        {
+          "document": 3,
+          "local_content_tokens": 28963,
+          "provider_input_tokens": null,
+          "provider_output_tokens": null,
+          "finding_count": 0
+        },
+        {
+          "document": 4,
+          "local_content_tokens": 28963,
+          "provider_input_tokens": null,
+          "provider_output_tokens": null,
+          "finding_count": 0
+        },
+        {
+          "document": 5,
+          "local_content_tokens": 28963,
+          "provider_input_tokens": null,
+          "provider_output_tokens": null,
+          "finding_count": 0
+        },
+        {
+          "document": 6,
+          "local_content_tokens": 28963,
+          "provider_input_tokens": null,
+          "provider_output_tokens": null,
+          "finding_count": 0
+        },
+        {
+          "document": 7,
+          "local_content_tokens": 28963,
+          "provider_input_tokens": null,
+          "provider_output_tokens": null,
+          "finding_count": 0
+        },
+        {
+          "document": 8,
+          "local_content_tokens": 28963,
+          "provider_input_tokens": null,
+          "provider_output_tokens": null,
+          "finding_count": 0
+        },
+        {
+          "document": 9,
+          "local_content_tokens": 28963,
+          "provider_input_tokens": null,
+          "provider_output_tokens": null,
+          "finding_count": 0
+        },
+        {
+          "document": 10,
+          "local_content_tokens": 28963,
+          "provider_input_tokens": null,
+          "provider_output_tokens": null,
+          "finding_count": 0
+        }
+      ]
+    }
+  ]
+}
