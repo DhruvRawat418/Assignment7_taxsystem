@@ -61,4 +61,4 @@ class ExtractionResult(StrictModel):
 
     @property
     def ready(self) -> bool:
-        return self.status == "extracted" and self.record is not None
+        return self.status == "extracted"

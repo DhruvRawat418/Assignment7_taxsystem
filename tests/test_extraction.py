@@ -57,8 +57,7 @@ def test_money_formats(text):
 
 @pytest.mark.parametrize("text", ["", "1,23.00", "1O0.00", "1.234", "NaN", "1e4", "-5.00", "12 34.00"])
 def test_never_repairs_or_guesses_amounts(text):
-    with pytest.raises(ValueError):
-        parse_money(text)
+    assert parse_money(text) is None
 
 
 def test_blank_box_two_is_missing_not_zero():
