@@ -129,6 +129,8 @@ def _documents(answers: dict) -> list[dict]:
 
 def _facts(session: dict) -> dict:
     answers = session["answers"]
+    if _answered(answers, "has_dependents") is False and session.get("dependents"):
+        raise ValueError("intake_dependent_inventory_conflict")
     facts = {"filing_status": FILING_STATUS[answers["filing_status"]["value"]]}
     for field, key in FACT_KEYS.items():
         value = _answered(answers, field)
@@ -171,6 +173,8 @@ def not_ready_reason(session: dict | None) -> str | None:
         return "intake_waiting_for_staff"
     if not session.get("intake_complete"):
         return "intake_not_finished"
+    if _answered(session["answers"], "has_dependents") is False and session.get("dependents"):
+        return "intake_dependent_inventory_conflict"
     if any(rec["status"] == "unsure" for f, rec in session["answers"].items() if f in MUST_KNOW):
         return "intake_unsure_answer"
     if any(field not in session['answers'] for field in SCOPE_FIELDS):

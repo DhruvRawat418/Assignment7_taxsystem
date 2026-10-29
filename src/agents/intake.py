@@ -17,6 +17,7 @@ from __future__ import annotations
 import operator
 import re
 import uuid
+from copy import deepcopy
 from datetime import datetime, timezone
 from typing import Annotated, Any, Optional, TypedDict
 
@@ -384,6 +385,16 @@ def _store(state: dict, field: str, value: Any, raw: str, who: str, status: str 
         if old and old["value"] != value:
             upd["answer_history"] = [{"field": field, "old": old["value"], "new": value, "at": rec["entered_at"]}]
         upd["answers"] = {field: rec}
+        if field == "has_dependents" and value is False:
+            previous = deepcopy(state.get("dependents", []))
+            draft = deepcopy(state.get("dep_draft") or {})
+            if previous or draft:
+                upd.setdefault("answer_history", []).append({
+                    "field": "dependents", "old": previous, "new": [],
+                    "previous_draft": draft, "at": rec["entered_at"],
+                    "entered_by": who, "note": "Taxpayer withdrew the dependent list.",
+                })
+            upd.update(dependents=[], dep_draft={}, dependents_done=False)
     upd["answered_order"] = [*state.get("answered_order", []), field]
     return upd
 
@@ -487,10 +498,23 @@ def handle_reply(state: dict, field: str, reply: str, parser: Parser) -> dict:
         if c.field in TOP_LEVEL_FIELDS and c.field in state.get("answers", {}):
             value, err = _validate(c.field, c.value, scan)
             if err is None:
-                fix = _store(state, c.field, value, text, who)
+                correction_state = {**state, **{key: upd[key] for key in
+                    ("dependents", "dep_draft", "dependents_done") if key in upd},
+                    "answers": merge_dicts(state.get("answers"), upd.get("answers"))}
+                fix = _store(correction_state, c.field, value, text, who)
                 upd["answers"] = merge_dicts(upd.get("answers"), fix["answers"])
                 upd["answer_history"] = [*upd.get("answer_history", []), *fix.get("answer_history", [])]
+                for key in ("dependents", "dep_draft", "dependents_done"):
+                    if key in fix:
+                        upd[key] = fix[key]
                 upd["preface"] = f"Thanks, I've updated: {LABELS.get(c.field, c.field).lower()}. "
+
+    if ((field.startswith("dependent_") or field == "more_dependents")
+            and upd.get("answers", {}).get("has_dependents", {}).get("value") is False):
+        # A correction can withdraw the question currently on screen. Do not
+        # interpret its obsolete answer as another dependent detail.
+        upd["preface"] += "The dependent list has been withdrawn. Let's continue."
+        return upd
 
     if parsed.intent == "off_topic" and not parsed.value:
         upd["preface"] += "Let's come back to this question."
