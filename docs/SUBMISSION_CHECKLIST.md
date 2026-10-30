@@ -7,6 +7,8 @@
 - [x] W-2 image OCR, deterministic MCP computations, independent audit and model review.
 - [x] Reviewed 2025 1040-SR PDF and audit record export, including dependent transcription.
 - [x] Explicit missing scope questions and withdrawn-dependent regression fix.
+- [x] Visible W-2 upload/replacement and attributed staff tax-form correction, with fresh-check/export guards.
+- [x] Integrated Guardrails & Ethics register, deterministic probes and red-team corpus.
 - [x] Docker build, tests, health and saved-case/upload persistence verification.
 - [x] Clean and resolved-HITL evaluation guides, synthetic images and evals/cases.json index.
 - [x] Live ten-document token experiment and raw usage report in docs/metrics.md.
@@ -37,6 +39,7 @@ sample or passing test suite does not establish every possible tax-profile case.
 
 ## Branch scope
 
-The application baseline includes Yong's dependent fix 508151e. His later
-W-2 document editor/UI commits are not included; they require a separate review.
-Other teammates' newer unreviewed branches are not automatically part of main.
+The final integration includes Yong's dependent fix and document editor/UI commits,
+plus Jijuan's guardrails component, preserving contributor history. Guardrail
+files are normalized from upload-guardrails into src/guardrails, tests/guardrails,
+demo and docs. Report/video and fresh-machine confirmation remain pending above.

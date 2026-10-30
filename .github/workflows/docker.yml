@@ -2,7 +2,7 @@ name: Docker offline checks
 
 on:
   push:
-    branches: [xiaolong/docker, yong/dashboard-security, "yong/review-*", dhruv/submission-integration, main]
+    branches: [xiaolong/docker, yong/dashboard-security, "yong/review-*", "yong/final-*", dhruv/submission-integration, main]
   pull_request:
 
 permissions:
@@ -22,6 +22,8 @@ jobs:
         run: docker run --rm --network none silverfile:local python -m pip check
       - name: Run every offline test, including OCR and MCP
         run: docker run --rm --network none silverfile:local python -m pytest tests -q
+      - name: Check integrated guardrails and red-team corpus
+        run: docker run --rm --network none silverfile:local python -m demo.run_guardrails --json
       - name: Check dashboard health
         run: docker compose up -d --wait --wait-timeout 90
       - name: Show dashboard logs

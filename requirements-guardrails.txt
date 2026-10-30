@@ -1,0 +1,19 @@
+# Python >= 3.11. The guardrail harness is deterministic: the register, probes,
+# red-team corpus, conformance CLI and unittest suite use only the standard
+# library. No LLM SDK, API key, network access or hosted model is required.
+#
+# This branch therefore pins nothing of its own. The dependencies below are
+# needed only to probe the components the harness checks, and each is already
+# pinned by the branch that owns it:
+#
+#   pydantic   Computation's and Eligibility's contracts (P1, P3, P6, E1-E6, O2)
+#   numpy      pulled in transitively by src/document_extraction/__init__.py,
+#   Pillow     which eagerly imports the OCR module
+#
+# Run on a checkout without those components and the harness still works: every
+# affected guardrail reports `absent`, the test suite skips rather than fails,
+# and the report states that absent is not a pass. Install them only when
+# merging with yong/integration and jijuan/eligibility to exercise the probes.
+pydantic>=2.9,<3
+numpy>=1.26,<3
+Pillow>=10.4,<13

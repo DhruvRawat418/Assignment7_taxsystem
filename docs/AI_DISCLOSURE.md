@@ -9,6 +9,19 @@ The team used AI assistance to interpret requirements, design agent interfaces, 
 - [Audit](AI_DISCLOSURE_AUDIT.md)
 - [Original orchestration skeleton](AI_DISCLOSURE_INTEGRATION.md)
 - [Dashboard and browser workflow](AI_DISCLOSURE_DASHBOARD.md)
+- [Guardrails & Ethics — Jijuan, Claude; integration notes — Yong, Codex](AI_DISCLOSURE_GUARDRAILS.md)
+
+## Yong — final integration on October 30
+
+Yong used OpenAI Codex to integrate the remaining document editor and Guardrails
+component into the published application, preserve contributor histories,
+normalize upload paths, inspect compatibility, strengthen failure-reporting
+probes with reproducing tests, and update setup/disclosure/checklist documentation.
+Codex ran isolated offline OCR/MCP/browser tests and prepared the final merge.
+An independent AI code review was requested before main publication. No live
+case or credential was read for this work; external review in tests is explicitly
+substituted, and no paid model call was made. This work does not complete the
+team's report/video or establish production readiness.
 
 ## Dhruv — orchestration, dashboard integration and release verification
 
