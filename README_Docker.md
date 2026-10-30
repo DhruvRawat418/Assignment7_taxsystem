@@ -45,6 +45,31 @@ case deliberately enters an incorrect itemizing answer so the grader can resolve
 it; do not change a truthful out-of-scope answer to bypass review. Ready means a
 draft is available for human review, not that a return has been filed or approved.
 
+### Staff document corrections
+
+At the top of **Case workspace**, choose **Open a case** and use
+**Upload / replace W-2** or **Correct tax form types**. The same controls appear
+in an active interview. Select the actual forms, attach synthetic images or the
+bundled sample, enter staff name/reason and confirm, then **Save document changes**.
+Complete any additional questions and explicitly **Run checks & AI review**.
+Earlier answers and image history are retained; previous reviews and PDF controls
+are revoked until fresh checks pass. Saving itself makes no model call.
+See [document editor](docs/DOCUMENT_EDITOR.md).
+
+### Guardrails and ethics checks
+
+Jijuan's component is integrated under `src/guardrails/` with conformance tests
+and a fixed red-team corpus. Run it without a model or network:
+
+```sh
+docker compose run --rm --no-deps app python -m demo.run_guardrails --json
+```
+
+The report distinguishes passing probes from partial overall coverage. Fourteen
+cases inject already-derived Intake flags; these do not prove recognition of the
+original phrasing. See [guardrails](docs/GUARDRAILS.md) and
+[conformance harness](docs/GUARDRAILS_CONFORMANCE.md).
+
 ## Tests and evidence
 
 ```sh
@@ -60,6 +85,7 @@ experiment used 20 requests and measured an 81.61% reduction in total input toke
 for selective recall. This is not an accuracy or dollar-cost claim.
 
 See [verification history](docs/RELEASE_VERIFICATION.md),
+[October 30 final integration and coverage limits](docs/FINAL_INTEGRATION_2026-10-30.md),
 [AI-use disclosure](docs/AI_DISCLOSURE.md) and
 [submission checklist](docs/SUBMISSION_CHECKLIST.md).
 
@@ -127,8 +153,8 @@ for routing, reducer behavior and explicit iteration/no-progress bounds.
 ## Contributions and remaining submission work
 
 Integrated contributions: Hanna — Intake/memory; Xinrui — extraction/task division;
-Jijuan — Rules; Xiaolong — computation/Docker; Yong — Audit/dashboard and dependent
-withdrawal fix; Dhruv — orchestration/application integration, PDF export and
+Jijuan — Rules/guardrails; Xiaolong — computation/Docker; Yong — Audit/dashboard,
+document correction and dependent withdrawal fix; Dhruv — orchestration/application integration, PDF export and
 release verification. Original contributor commit histories are preserved.
 The team must confirm its final named specialization table in the report.
 

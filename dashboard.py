@@ -342,6 +342,16 @@ def format_recorded_time(value):
         return value + " (unrecognized timestamp)"
 
 
+def format_correction_value(value, field=None):
+    if type(value) is bool:
+        return "Yes" if value else "No"
+    if value is None:
+        return "Not recorded"
+    if isinstance(value,list):
+        return ", ".join(Path(v).name if field == "w2_files" else str(v) for v in value) or "None"
+    return str(value)
+
+
 def load_correction_history(database, case_id):
     """Read staff corrections from the saved intake, excluding raw answers."""
     if not database.is_file():
@@ -358,16 +368,12 @@ def load_correction_history(database, case_id):
         if saved is None:
             raise ValueError("No saved intake interview was found for this case.")
         history = saved.checkpoint.get("channel_values", {}).get("answer_history", [])
-        def answer(value):
-            if type(value) is bool:
-                return "Yes" if value else "No"
-            return "Not recorded"
         return [{
             "Recorded at": format_recorded_time(entry.get("at")),
             "Staff": entry.get("staff", "Not recorded"),
             "Answer changed": FIELDS.get(entry.get("field"), entry.get("field", "Unknown")),
-            "Previous answer": answer(entry.get("old")),
-            "Corrected answer": answer(entry.get("new")),
+            "Previous answer": format_correction_value(entry.get("old"),entry.get("field")),
+            "Corrected answer": format_correction_value(entry.get("new"),entry.get("field")),
             "Reason": entry.get("reason", "Not recorded"),
         } for entry in history if isinstance(entry, dict) and "staff" in entry and "reason" in entry]
 
@@ -411,6 +417,12 @@ def submit_correction(database, case, field, new_value, staff, reason):
 
 
 async def stop_saved_case(database, case):
+    from src.integration.case_service import case_activity
+    with case_activity(database.parent,case['case_id']):
+        return await _stop_saved_case(database,case)
+
+
+async def _stop_saved_case(database, case):
     """Resume the existing human interrupt with the graph's stop decision."""
     from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
     from langgraph.types import Command
@@ -547,6 +559,10 @@ def main(database=None):
         st.divider()
         st.markdown('<div class="sf-sidebar-foot"><span aria-hidden="true">●</span> Local workspace<small>Tax year 2025 · Draft preparation</small></div>', unsafe_allow_html=True)
         st.caption("Local, single-operator workspace. Drafts require staff review before use.")
+    if st.session_state.get('_screen') == 'documents':
+        from src.integration.document_ui import render_documents
+        render_documents(database.parent)
+        return
     if st.session_state.get('_screen') == 'intake':
         render_intake(database.parent)
         return
@@ -561,7 +577,8 @@ def main(database=None):
             st.success(f"{case_id}: stopped. The saved case and its issues have been retained.")
         else:
             st.warning(f"{case_id}: {result['status']}. Review the result below before taking another action.")
-            st.json(result)
+            with st.expander("Execution details", expanded=False):
+                st.json(result)
     try:
         cases = load_cases(database)
         cases += interview_rows(database.parent,cases)
@@ -571,6 +588,24 @@ def main(database=None):
     if not cases:
         st.info("No saved workflow cases yet. Run an intake handoff, then refresh this page.")
         return
+    visible = filter_cases(cases, query, selected_status)
+    if not visible:
+        st.info("No cases match these filters. Change the search or status to see more cases.")
+        return
+    ids = [c["case_id"] for c in visible]
+    if st.session_state.get("open_case_id") not in ids:
+        st.session_state["open_case_id"] = next((c["case_id"] for c in visible
+            if c["status"] == "paused_for_human_review"), ids[0])
+    selected = st.selectbox("Open a case", ids, key="open_case_id")
+    case = next(c for c in visible if c["case_id"] == selected)
+    st.divider()
+    heading, badge = st.columns([4, 2], vertical_alignment="center")
+    heading.subheader(case["case_id"])
+    badge.markdown(status_badge_html(case["status"]), unsafe_allow_html=True)
+    badge.caption(f"Revision {case['revision']}")
+    from src.integration.document_ui import document_actions
+    document_actions(case['case_id'],key_prefix='case')
+    st.divider()
     columns = st.columns(4)
     summaries = [
         ("saved", "Saved cases", len(cases), "All saved records"),
@@ -583,10 +618,6 @@ def main(database=None):
             st.metric(label, value)
             st.caption(caption)
     st.write("")
-    visible = filter_cases(cases, query, selected_status)
-    if not visible:
-        st.info("No cases match these filters. Change the search or status to see more cases.")
-        return
     show_attention_queue(visible)
     st.subheader("Case register")
     st.caption(f"Showing {len(visible)} of {len(cases)} saved cases. Draft ready means prepared for staff review; it does not mean filed.")
@@ -594,17 +625,6 @@ def main(database=None):
         "Case": c["case_id"], "Status": status_label(c["status"]), "Revision": c["revision"],
         "Review items": len(c["issues"]),
     } for c in visible], hide_index=True, width="stretch")
-    ids = [c["case_id"] for c in visible]
-    if st.session_state.get("open_case_id") not in ids:
-        st.session_state["open_case_id"] = next((c["case_id"] for c in visible
-            if c["status"] == "paused_for_human_review"), ids[0])
-    selected = st.selectbox("Open a case", ids, key="open_case_id")
-    case = next(c for c in visible if c["case_id"] == selected)
-    st.divider()
-    heading, badge = st.columns([4, 2], vertical_alignment="center")
-    heading.subheader(case["case_id"])
-    badge.markdown(status_badge_html(case["status"]), unsafe_allow_html=True)
-    badge.caption(f"Revision {case['revision']}")
     actions, evidence, history, tasks = st.tabs(["Review & actions", "Draft & evidence", "History", "Agent tasks"], key="case_detail_tabs")
     with actions:
         show_review_panel(database, case)
