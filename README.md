@@ -85,6 +85,7 @@ experiment used 20 requests and measured an 81.61% reduction in total input toke
 for selective recall. This is not an accuracy or dollar-cost claim.
 
 See [verification history](docs/RELEASE_VERIFICATION.md),
+[October 30 final integration and coverage limits](docs/FINAL_INTEGRATION_2026-10-30.md),
 [AI-use disclosure](docs/AI_DISCLOSURE.md) and
 [submission checklist](docs/SUBMISSION_CHECKLIST.md).
 

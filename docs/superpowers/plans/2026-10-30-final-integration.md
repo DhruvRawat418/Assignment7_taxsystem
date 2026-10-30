@@ -19,14 +19,14 @@ no force-push; preserve contributor history and pending non-code deliverables.
 - Main can advance during work: compare/fetch before merge, retain all team work.
 
 ### Task 1: Assemble compatible integration
-- [ ] Merge main and original guardrails history into the isolated final branch.
-- [ ] Run guardrails CLI at root, observe missing-module failure; relocate package/tests/docs/demo to standard paths.
-- [ ] Run existing conformance and red-team tests; fix demonstrated compatibility errors with RED→GREEN regressions.
+- [x] Merge main and original guardrails history into the isolated final branch.
+- [x] Run guardrails CLI at root, observe missing-module failure; relocate package/tests/docs/demo to standard paths.
+- [x] Run existing conformance and red-team tests; fix demonstrated compatibility errors with RED→GREEN regressions.
 
 ### Task 2: Verify and document
-- [ ] Run whole suite, explicit optional probes and guardrails reports with external models mocked only in tests.
-- [ ] Update README, checklist, disclosures and a dated release record with actual results and known limits.
-- [ ] One independent review; one tested fix pass for Important/Critical findings.
+- [x] Run whole suite, explicit optional probes and guardrails reports with external models mocked only in tests.
+- [x] Update README, checklist, disclosures and a dated release record with actual results and known limits.
+- [x] One independent review; one tested fix pass for Important/Critical findings.
 
 ### Task 3: Publish main
 - [ ] Push final branch, open PR to main, wait for Docker checks.

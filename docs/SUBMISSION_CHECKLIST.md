@@ -17,6 +17,9 @@
 Latest local Docker result: 405 passed, 37 subtests; 12 optional integration tests
 passed separately. Saved database contents/uploads were unchanged after recreation.
 These results cover the runtime at 5b7095b; later publication changes organize docs.
+The October 30 integration adds the document editor and guardrails: local suite
+466 passed, 12 skipped, 244 subtests; optional probes 11+1 passed. Its independent
+review and scope limits are in [the integration record](FINAL_INTEGRATION_2026-10-30.md).
 
 ## Still required from the team
 

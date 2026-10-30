@@ -54,8 +54,8 @@ in the taxpayer's words names the problem.
    python -m demo.run_eligibility --scenario clean
    ```
 
-   Expected: `status: ready`, cleared for Computation. This requires `jijuan/eligibility`
-   merged in.
+   Expected: `status: ready`, cleared for Computation. This separate clean run does not resume or approve a persisted exploitation
+   case; use the GUI evaluation guide for an actual saved review flow.
 
 8. The system never records a conclusion about any person. What persists is that a human
    reviewed the case and what they decided — not a risk score, and not a judgement.
