@@ -4,7 +4,7 @@ The team used AI assistance to interpret requirements, design agent interfaces, 
 
 - [Intake](AI_DISCLOSURE_INTAKE.md)
 - [Memory — Hanna, Claude](AI_DISCLOSURE_MEMORY.md)
-- [Eligibility](../AI_DISCLOSURE_ELIGIBILITY.md)
+- [Eligibility](AI_DISCLOSURE_ELIGIBILITY.md)
 - [Computation and Docker](AI_DISCLOSURE_COMPUTATION.md)
 - [Audit](AI_DISCLOSURE_AUDIT.md)
 - [Original orchestration skeleton](AI_DISCLOSURE_INTEGRATION.md)

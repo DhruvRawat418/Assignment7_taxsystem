@@ -3,7 +3,8 @@
 This release combines the published application, Yong's W-2 editor and Jijuan's
 Guardrails & Ethics component. All published teammate branch heads checked during
 integration are ancestors of the candidate. The eligibility README rename history
-is retained while the root README remains the current grader guide.
+is retained while the root README is the project entry point and README_Docker.md retains the
+complete grader/Docker guide. Dhruv's latest disclosure move is also preserved.
 
 ## Changes
 
