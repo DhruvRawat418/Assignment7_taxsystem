@@ -1,4 +1,4 @@
-# AI Use Disclosure 
+# Team AI Use Disclosure 
 
 Team 7 used Claude (Anthropic), OpenAI Codex, and DeepSeek throughout this assignment, and the extent and character of that assistance varied by component and by team member. AI assistance was substantial across the project: models were used to interpret the specification, design component boundaries, write and revise implementation code, generate synthetic fixtures and test suites, run development checks, and draft documentation. No member claims unaided authorship of their component. Each member remains responsible for understanding, reviewing and demonstrating the code attributed to them, and for the accuracy of the description below.
 
